@@ -16,6 +16,7 @@
     "test:browser": "node tests/browser.mjs",
     "test:motion": "node tests/motion.mjs",
     "test:landing": "node tests/landing.mjs",
+    "test:theme": "node tests/theme.mjs",
     "test:notes": "node tests/notes.mjs",
     "test:codeget": "node tests/codeget-browser.mjs",
     "check:publish": "node scripts/check-publication.mjs"

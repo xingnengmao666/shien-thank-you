@@ -1,0 +1,97 @@
+.theme-picker { display: inline-flex; align-items: center; gap: 8px; margin: 0; color: var(--muted); font-size: 12px; font-weight: 400; white-space: nowrap; }
+.theme-picker select { width: auto; min-height: 36px; margin: 0; padding: 6px 25px 6px 10px; border: 1px solid var(--line); border-radius: 5px; background: var(--white); color: var(--ink); font-size: 12px; cursor: pointer; }
+.site-header nav { flex-wrap: wrap; justify-content: flex-end; gap: 20px; }
+.login-shell > .theme-picker { margin: -16px 0 24px; }
+.admin-header-actions { display: flex; align-items: center; gap: 18px; font-size: 12px; color: var(--muted); }
+
+html[data-theme="sakura"], html[data-theme="sakura"] .public-page {
+  --ink: #35494f;
+  --muted: #5f7478;
+  --paper: #faf6ef;
+  --white: #fffdf8;
+  --line: #c8d6d4;
+  --blue: #2f6771;
+  --blue-hover: #24545d;
+  --pale: #e8f0ed;
+  --danger: #a33f40;
+  --school-original: #78a5ae;
+  --school-new: #b7756b;
+  --original-wash: #e3efee;
+  --new-wash: #f5e5de;
+  --original-boost: 0%;
+  --new-boost: 0%;
+  --button-ink: #fffdf8;
+}
+html[data-theme="sakura"] body { background: transparent; isolation: isolate; min-height: 100svh; color: var(--ink); }
+/* Keep the supplied illustration sharp; only the reading surfaces get a paper wash. */
+html[data-theme="sakura"] body::before { content: ''; position: fixed; inset: 0; z-index: -1; pointer-events: none; background: var(--paper) url('/images/sakura-classroom.png') center / cover no-repeat; }
+html[data-theme="sakura"] .school-atmosphere { display: none; }
+html[data-theme="sakura"] .site-header { border-bottom-color: #8ba9ab70; }
+html[data-theme="sakura"] .brand { color: var(--blue); }
+html[data-theme="sakura"] .wall-heading h1 { font-weight: 600; letter-spacing: 4px; color: #315a63; }
+html[data-theme="sakura"] .wall-heading .dedication { color: var(--blue); }
+html[data-theme="sakura"] .wall-foot { padding: 12px 16px 0; background: #fffdf8d9; border-radius: 4px; }
+html[data-theme="sakura"] .heart-outline path { fill-opacity: .6; stroke-width: 1.7; }
+html[data-theme="sakura"] #heart-thread stop:nth-child(-n+2) { stop-color: var(--school-original); }
+html[data-theme="sakura"] #heart-thread stop:nth-child(n+3) { stop-color: var(--school-new); }
+html[data-theme="sakura"] .public-page .heart-note { color: #354f55; --note-shadow: 0 1px 2px #35494f0f, 0 7px 18px #35494f18; }
+html[data-theme="sakura"] .public-page .heart-note[data-campus="new"] { color: #654640; }
+html[data-theme="sakura"] .public-page .heart-note::after,
+html[data-theme="sakura"] .public-page .paper-surface::after { background-image: repeating-linear-gradient(0deg, #35494f05 0 1px, transparent 1px 4px), radial-gradient(120% 90% at 8% 0%, #fffdf890, transparent 62%); }
+html[data-theme="sakura"] .public-page .primary,
+html[data-theme="sakura"] .primary { background: var(--blue); color: var(--button-ink); border-radius: 6px 6px 14px 6px; box-shadow: 0 3px 0 #204d5618; }
+html[data-theme="sakura"] .primary:hover:not(:disabled) { background: var(--blue-hover); }
+html[data-theme="sakura"] .write-reveal,
+html[data-theme="sakura"] .codeget-card { background-color: #fffdf8ed; background-image: linear-gradient(#fffdf8ed, #fffdf8ed), linear-gradient(90deg, #78a5ae, #d7a092); border-color: #b5c9c570; border-top-color: transparent; border-radius: 6px 6px 18px 6px; box-shadow: 0 10px 30px #35494f0c; }
+html[data-theme="sakura"] .how-section { padding: 40px 34px; background: #fffdf8db; border-color: #b5c9c5; border-radius: 4px; }
+html[data-theme="sakura"] .steps a { text-decoration: underline; text-underline-offset: 3px; }
+html[data-theme="sakura"] .site-footer { background: #faf6efc9; }
+html[data-theme="sakura"] dialog,
+html[data-theme="sakura"] .login-panel { background: var(--white); border-color: var(--line); box-shadow: 0 16px 50px #35494f26; }
+html[data-theme="sakura"] dialog[open]::backdrop { background-color: #35494f70; }
+html[data-theme="sakura"] .public-page #read-dialog { background: #edf3ef; color: #354f55; border-color: #b5cdce; }
+html[data-theme="sakura"] .public-page #read-dialog[data-campus="new"] { background: #f7eae3; color: #654640; border-color: #dec4ba; }
+html[data-theme="sakura"] input,
+html[data-theme="sakura"] select,
+html[data-theme="sakura"] textarea { background: var(--white); border-color: #abc2c2; color: var(--ink); }
+html[data-theme="sakura"] input::placeholder,
+html[data-theme="sakura"] textarea::placeholder { color: #677d80; }
+html[data-theme="sakura"] :focus-visible { outline-color: var(--blue); }
+html[data-theme="sakura"] .codeget-save-reminder { border-left-color: var(--blue); }
+html[data-theme="sakura"] .codeget-save-reminder strong { color: var(--blue); }
+html[data-theme="sakura"] .codeget-seal { stroke: var(--blue); }
+html[data-theme="sakura"] .page-progress { background: #c8d6d480; }
+html[data-theme="sakura"] .page-progress span { background: var(--blue); }
+html[data-theme="sakura"] .admin-main { background: #faf6efde; }
+html[data-theme="sakura"] .sidebar { background: #305963f2; }
+html[data-theme="sakura"] .sidebar-subtitle,
+html[data-theme="sakura"] .sidebar-bottom,
+html[data-theme="sakura"] .sidebar nav button { color: #deebe8; }
+html[data-theme="sakura"] .sidebar nav button.active { color: var(--blue); background: var(--white); }
+html[data-theme="sakura"] .sidebar nav button span { color: var(--blue); background: #e4eeeb; }
+html[data-theme="sakura"] .sidebar .brand { color: var(--white); }
+html[data-theme="sakura"] .admin-panel,
+html[data-theme="sakura"] .stat { background: var(--white); }
+html[data-theme="sakura"] th { background: #e8f0ed; color: var(--muted); }
+html[data-theme="sakura"] td { border-color: var(--line); }
+html[data-theme="sakura"] .secondary { color: var(--blue); background: var(--white); border-color: #abc2c2; }
+html[data-theme="sakura"] .secondary:hover { background: var(--pale); }
+html[data-theme="sakura"] .small-action { color: var(--blue); }
+html[data-theme="sakura"] .admin-view.is-region-loading::before { background-image: linear-gradient(90deg, transparent 15%, #78a5ae 45%, transparent 75%); }
+@starting-style { html[data-theme="sakura"] dialog[open]::backdrop { background-color: #35494f00; } }
+
+@media (max-width: 850px) {
+  .site-header, .public-page .site-header { height: auto; min-height: 72px; flex-wrap: wrap; gap: 12px; padding-block: 14px; }
+  .site-header nav { gap: 14px; }
+}
+@media (max-width: 700px) {
+  .site-header nav { width: 100%; justify-content: space-between; gap: 8px; }
+  .theme-picker { gap: 5px; font-size: 11px; }
+  .theme-picker select { min-height: 34px; padding: 5px 4px; font-size: 11px; }
+  html[data-theme="sakura"] body::before { background-position: right center; }
+  html[data-theme="sakura"] .wall-heading h1 { letter-spacing: 1px; }
+  html[data-theme="sakura"] .wall-heading { padding: 12px 8px; background: #fffdf8c9; border-radius: 4px; }
+  html[data-theme="sakura"] .how-section { padding: 28px 22px; }
+  .admin-header { flex-wrap: wrap; gap: 16px; }
+  .admin-header-actions { width: 100%; justify-content: space-between; gap: 12px; }
+}

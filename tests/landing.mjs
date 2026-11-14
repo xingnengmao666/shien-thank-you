@@ -4,6 +4,7 @@ import { mkdirSync } from 'node:fs';
 const remote = Boolean(process.env.TEST_BASE_URL), base = process.env.TEST_BASE_URL || 'http://127.0.0.1:8787';
 const browser = await chromium.launch({ headless: true, ...(process.env.BROWSER_CHANNEL ? { channel: process.env.BROWSER_CHANNEL } : {}), ...(process.env.BROWSER_PROXY ? { proxy: { server: process.env.BROWSER_PROXY, bypass: '127.0.0.1,localhost' } } : {}) });
 const context = await browser.newContext({ viewport: { width: 1365, height: 900 } });
+await context.addInitScript(() => localStorage.setItem('shien-theme', 'campus'));
 const page = await context.newPage(), errors = [];
 page.on('pageerror', error => errors.push(error.message));
 mkdirSync('test-results', { recursive: true });
@@ -88,6 +89,7 @@ try {
   await keyboard.close();
 
   const mobileContext = await browser.newContext({ ...devices['Pixel 7'] });
+  await mobileContext.addInitScript(() => localStorage.setItem('shien-theme', 'campus'));
   try {
     const mobile = await mobileContext.newPage();
     mobile.on('pageerror', error => errors.push(error.message));
@@ -106,6 +108,7 @@ try {
   } finally { await mobileContext.close(); }
 
   const reduced = await browser.newContext({ viewport: { width: 1280, height: 800 }, reducedMotion: 'reduce' });
+  await reduced.addInitScript(() => localStorage.setItem('shien-theme', 'campus'));
   try {
     const quiet = await reduced.newPage();
     quiet.on('pageerror', error => errors.push(error.message));

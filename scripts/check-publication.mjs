@@ -1,14 +1,22 @@
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
+import { createHash } from 'node:crypto';
 import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { parseCSV } from '../src/csv.js';
 
 function checkFile(path, content, privateValues) {
+  const bytes = Buffer.from(content);
+  content = bytes.toString('utf8');
   const template = path === 'public/students-template.csv';
   if (/^(\.local|\.wrangler|node_modules|test-results|dist)\//.test(path) || path === 'wrangler.toml'
     || /(^|\/)\.env/.test(path) || /(^|\/)\.dev\.vars/.test(path) && path !== '.dev.vars.example'
     || /\.(csv|docx?|xlsx?|pdf|db|sqlite\w*|bak|dump|pem|key|p12|pfx|sql)$/i.test(path) && !template && !/^migrations\/\d{4}_[a-z0-9_]+\.sql$/.test(path)) return 'private file type or path';
-  if (content.includes('\0')) return 'binary content requires review';
+  if (content.includes('\0')) {
+    // Only the user's reviewed background illustration may enter the public repository.
+    const artwork = path === 'public/images/sakura-classroom.png'
+      && createHash('sha256').update(bytes).digest('hex') === 'a420519ca8d2de73d166b75abe9fd97dd50f8b53e91223068d586b8b03122da6';
+    return artwork ? null : 'binary content requires review';
+  }
   if (template && content.trim() !== 'real_name,class_name,student_code,teacher_name') return 'CSV template must contain only its header';
   if (/(?:github_pat_|gh[pousr]_)[A-Za-z0-9_]{20,}|-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----/.test(content)) return 'credential pattern';
   if (privateValues.some(value => content.includes(value))) return 'private roster, code, credential or deployment value';
@@ -25,6 +33,11 @@ if (process.argv.includes('--self-test')) {
   for (const value of ['private-name', 'private-code', 'private-secret']) assert.ok(checkFile('README.md', `text ${value}`, [value]));
   assert.ok(checkFile('src/index.js', 'ghp_' + 'x'.repeat(36), []));
   assert.ok(checkFile('public/file.png', '\0binary', []));
+  const artwork = readFileSync('public/images/sakura-classroom.png');
+  assert.equal(checkFile('public/images/sakura-classroom.png', artwork, []), null);
+  assert.ok(checkFile('public/screenshot.png', artwork, []));
+  const changedArtwork = Buffer.from(artwork); changedArtwork[100] ^= 1;
+  assert.ok(checkFile('public/images/sakura-classroom.png', changedArtwork, []));
   console.log('Publication check self-test passed.');
 } else {
   const privateValues = [];
@@ -49,7 +62,7 @@ if (process.argv.includes('--self-test')) {
   assert.ok(files.length, 'Stage the public project files before checking publication.');
   const failures = [];
   for (const path of files) {
-    const content = execFileSync('git', ['show', ':' + path], { encoding: 'utf8', maxBuffer: 10 * 1024 * 1024 });
+    const content = execFileSync('git', ['show', ':' + path], { maxBuffer: 10 * 1024 * 1024 });
     const reason = checkFile(path, content, values);
     if (reason) failures.push(`${path}: ${reason}`);
   }

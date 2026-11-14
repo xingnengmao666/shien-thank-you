@@ -74,7 +74,7 @@ function arrangeNotes() {
   }
   sizeHeart();
   for (const button of noteButtons) {
-    const angle = button.offsetHeight > button.offsetWidth * 1.3 ? 0 : ((Number(button.dataset.messageId) * 7) % 5) - 2;
+    const angle = columns === 1 || button.offsetHeight > button.offsetWidth * 1.3 ? 0 : ((Number(button.dataset.messageId) * 7) % 5) - 2;
     button.style.setProperty('--rotation', `${angle}deg`);
     const previous = oldPositions.get(button), next = button.getBoundingClientRect();
     if (previous && !matchMedia('(prefers-reduced-motion: reduce)').matches && (Math.abs(previous.x - next.x) > 1 || Math.abs(previous.y - next.y) > 1)) {

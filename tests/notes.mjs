@@ -84,6 +84,7 @@ try {
     await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
     await page.evaluate(async () => { await Promise.all([...document.querySelectorAll('.heart-note')].flatMap(el => el.getAnimations()).map(a => a.finished.catch(() => {}))); });
     await complete();
+    if (width <= 390) assert.ok(await page.locator('.heart-note').evaluateAll(notes => notes.every(note => note.style.getPropertyValue('--rotation') === '0deg')), 'Single-column notes must stay upright inside the heart');
     if (width === 390) await page.screenshot({ path: 'test-results/local-notes-complete-mobile.png', fullPage: true });
   }
   assert.deepEqual(errors, []);
