@@ -1,0 +1,155 @@
+/* The two campuses meet at the heart; all sensing layers are decorative. */
+.public-page {
+  --school-original: #67d027;
+  --school-new: #94070a;
+  --ink: #293128;
+  --muted: #646e62;
+  --line: #dfe5db;
+  --paper: #fbfcfa;
+  --blue: #94070a;
+  --blue-hover: #760609;
+  --pale: #faeeee;
+  --button-ink: #fff;
+  --original-wash: #edf8e4;
+  --new-wash: #faeeee;
+  --original-boost: 0%;
+  --new-boost: 0%;
+  --original-glow: .12;
+  --new-glow: .07;
+  background: var(--paper);
+  color: var(--ink);
+  isolation: isolate;
+}
+.public-page[data-active-school="original"] {
+  --blue: #326d14;
+  --blue-hover: #5cc021;
+  --button-ink: #18350e;
+  --pale: #edf8e4;
+  --original-wash: #d9f1c8;
+  --new-wash: #fcf5f5;
+  --original-boost: 12%;
+  --new-boost: -3%;
+  --original-glow: .27;
+  --new-glow: .025;
+}
+.public-page[data-active-school="new"] {
+  --original-wash: #f5faef;
+  --new-wash: #f2dadd;
+  --original-boost: -3%;
+  --new-boost: 12%;
+  --original-glow: .035;
+  --new-glow: .16;
+}
+.school-atmosphere { position: fixed; inset: 0; pointer-events: none; z-index: -1; }
+.school-atmosphere span { position: absolute; inset: 0; transition: opacity 300ms linear; }
+.school-atmosphere .school-original { background: linear-gradient(90deg, #67d027, #67d02700 70%); opacity: var(--original-glow); }
+.school-atmosphere .school-new { background: linear-gradient(270deg, #94070a, #94070a00 70%); opacity: var(--new-glow); }
+.public-page .site-header { height: 72px; }
+.public-page .brand { font-size: 19px; }
+.public-page .brand svg { color: var(--blue); transition: color 260ms linear; }
+.public-page :focus-visible { outline-color: var(--blue); }
+.public-page .wall-section { min-height: calc(100svh - 72px); padding-top: 25px; display: grid; grid-template-rows: auto 1fr auto; }
+.public-page .wall-heading { display: block; text-align: center; border: 0; padding: 0; }
+.public-page .dedication { margin: 0 0 7px; font-size: 13px; }
+.public-page .wall-heading h1 { font: 500 clamp(30px, 3.6vw, 44px)/1.4 "STKaiti", "KaiTi", "Kaiti SC", serif; letter-spacing: 2px; }
+.public-page .wall-heading > p:last-child { font-size: 13px; margin: 9px 0 0; }
+.public-page .heart-stage { width: min(800px, 100%, max(280px, calc((100svh - 385px) * 1.3))); align-self: center; margin: 23px auto 0; }
+.public-page .heart-stage.has-notes { width: var(--wall-width); aspect-ratio: auto; padding-block: var(--heart-top-space, 80px) var(--heart-bottom-space, 100px); margin-block: 28px 20px; }
+.has-notes #notes { position: relative; padding-inline: 10%; display: grid; gap: 26px; }
+.public-page .has-notes .heart-outline { inset: 0; width: 100%; height: 100%; }
+.note-row { display: flex; justify-content: center; align-items: start; gap: 24px; }
+.note-row:first-child { justify-content: space-around; }
+.public-page .heart-note { position: relative; flex: 0 0 var(--note-width); width: var(--note-width); height: auto; min-height: 110px; padding: 17px 16px 10px; overflow: visible; transform: rotate(var(--rotation, 0deg)); transition: transform 200ms linear, box-shadow 200ms linear, background-color 200ms linear, color 200ms linear; }
+.public-page .heart-note:hover, .public-page .heart-note:focus-visible { transform: translateY(-3px) rotate(0deg); }
+.public-page .note-preview { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; white-space: pre-wrap; overflow-wrap: anywhere; font-size: 14px; line-height: 1.7; }
+.public-page .is-expanded .note-preview { display: block; -webkit-line-clamp: unset; overflow: visible; }
+.public-page .note-author { display: block; white-space: normal; overflow-wrap: anywhere; font-size: 11px; line-height: 1.6; margin-top: 7px; opacity: .9; }
+.note-actions { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: 6px; }
+.note-actions button { padding: 4px 0; min-height: 28px; color: inherit; background: transparent; font-size: 11px; }
+.note-read { margin-left: auto; opacity: .7; }
+.note-toggle::after { content: '▾'; display: inline-block; margin-left: 5px; transition: rotate 200ms linear; }
+.note-toggle[aria-expanded="true"]::after { rotate: 180deg; }
+.public-page .heart-outline { stroke-width: 1.2; stroke-dasharray: 3 8; overflow: visible; }
+.public-page .heart-outline path { animation: heart-thread 8s linear infinite; }
+@keyframes heart-thread { to { stroke-dashoffset: -44; } }
+.original-paper { stop-color: var(--original-wash); }
+.new-paper { stop-color: var(--new-wash); }
+.original-paper, .new-paper { transition: stop-color 300ms linear; }
+.school-legend { position: absolute; inset: 0 10% auto; display: flex; justify-content: space-between; gap: 18px; font-size: 11px; color: var(--muted); }
+.school-legend span { display: flex; align-items: center; gap: 7px; }
+.school-legend i { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+.original-label i { background: var(--school-original); }
+.new-label i { background: var(--school-new); }
+.public-page .wall-empty { top: 44%; }
+.public-page .empty-heart { color: var(--blue); font-size: 52px; transition: color 260ms linear; }
+.public-page .wall-empty h3 { font-size: 20px; }
+.public-page .wall-count { text-align: center; font-size: 12px; color: var(--muted); margin: 0 0 13px; }
+.public-page .wall-count strong { color: var(--blue); font-size: 21px; transition: color 260ms linear; }
+.public-page .wall-bottom { padding: 11px 0; font-size: 11px; }
+.public-page .live-dot { background: var(--blue); }
+.scroll-invitation { display: flex; align-items: center; justify-content: center; gap: 12px; width: fit-content; min-height: 44px; margin: 7px auto 11px; color: var(--muted); font-size: 12px; }
+.scroll-invitation span { font-size: 20px; }
+.scroll-invitation:hover { color: var(--blue); }
+.public-page .heart-note { --paper-base: 14%; --campus-color: var(--school-original); --paper-boost: var(--original-boost); --note-paper: color-mix(in srgb, var(--campus-color) calc(var(--paper-base) + var(--paper-boost)), white); background: var(--note-paper); border-color: color-mix(in srgb, var(--campus-color) 24%, white); color: #25451c; --note-shadow: 0 1px 1px #2931280b, 0 6px 14px #29312814; }
+.public-page .heart-note[data-campus="new"] { --campus-color: var(--school-new); --paper-boost: var(--new-boost); color: #542629; }
+.public-page .note-tone-1 { --paper-base: 7%; }
+.public-page .note-tone-2 { --paper-base: 11%; }
+.public-page .note-tone-3 { --paper-base: 20%; }
+.public-page .heart-note::before { background: color-mix(in srgb, var(--campus-color) 22%, #ffffff90); }
+.public-page .heart-note::after, .public-page .paper-surface::after { background-image: repeating-linear-gradient(0deg, #29312806 0 1px, transparent 1px 4px), radial-gradient(120% 90% at 8% 0%, #ffffff90, transparent 62%); }
+.public-page .heart-note:hover, .public-page .heart-note:focus-visible { transform: translateY(-3px) rotate(0deg); box-shadow: 0 2px 3px #2931280e, 0 14px 28px #29312822; }
+.public-page .note-tooltip { border-color: var(--line); color: var(--ink); box-shadow: 0 8px 26px #2931281a; }
+.write-section { padding-top: 64px; scroll-margin-top: 28px; }
+.write-reveal { opacity: 0; visibility: hidden; transform: translateY(28px); display: grid; grid-template-columns: 1fr auto; gap: 70px; align-items: center; padding: 38px 42px; background: #ffffffd9; border: 1px solid var(--line); border-radius: 9px; border-top: 3px solid transparent; background-image: linear-gradient(#fff, #fff), linear-gradient(90deg, #67d027 35%, #94070a 65%); background-origin: border-box; background-clip: padding-box, border-box; }
+.write-reveal[inert] { pointer-events: none; }
+.write-intro h2 { font: 500 clamp(24px, 2.6vw, 32px)/1.6 "STKaiti", "KaiTi", serif; }
+.public-page .intro-copy { font-size: 14px; text-align: left; max-width: 540px; margin: 13px 0 0; line-height: 1.9; }
+.write-action { text-align: center; max-width: 265px; }
+.public-page .primary { color: var(--button-ink); background: var(--school-new); }
+.public-page[data-active-school="original"] .primary { background: var(--school-original); }
+.public-page .primary:hover:not(:disabled) { background: var(--blue-hover); }
+.participation-link { display: inline-block; margin-top: 14px; padding: 6px; font-size: 12px; color: var(--muted); text-decoration: underline; text-underline-offset: 4px; }
+.public-page .how-section { margin-top: 56px; gap: 65px; }
+.public-page .step-number { border-color: var(--line); }
+.public-page .site-footer { margin-top: 10px; }
+.public-page .site-footer { align-items: start; flex-wrap: wrap; gap: 12px 24px; }
+.open-source-note { margin-top: 7px; font-size: 11px; }
+.open-source-note a { text-decoration: underline; text-underline-offset: 3px; }
+.public-page dialog { color: var(--ink); border-color: var(--line); box-shadow: 0 22px 70px #29312822; }
+.public-page dialog[open]::backdrop { background-color: #29312866; }
+.public-page input, .public-page select, .public-page textarea { background: #fcfdfb; border-color: #d4decf; }
+.public-page input::placeholder, .public-page textarea::placeholder { color: #737e6d; }
+.public-page #read-dialog { --campus-color: var(--school-original); color: #25451c; background: color-mix(in srgb, var(--campus-color) 12%, white); border-color: color-mix(in srgb, var(--campus-color) 24%, white); box-shadow: 0 2px 6px #2931281a, 0 20px 50px #29312830; }
+.public-page #read-dialog[data-campus="new"] { --campus-color: var(--school-new); color: #542629; }
+.public-page .sending-paper { background: var(--pale); color: var(--ink); border-color: var(--line); }
+.public-page .page-progress { background: #dfe5db80; }
+.public-page .page-progress span { background: var(--blue); }
+@starting-style { .public-page dialog[open]::backdrop { background-color: #29312800; } }
+@media (max-width: 700px) {
+  .public-page .site-header { height: 64px; }
+  .public-page .brand { font-size: 16px; }
+  .public-page .wall-section { min-height: calc(100svh - 64px); padding-top: 28px; }
+  .public-page .wall-heading h1 { font-size: clamp(25px, 6.7vw, 32px); letter-spacing: 1px; }
+  .public-page .wall-heading > p:last-child { font-size: 11px; margin-top: 10px; }
+  .public-page .heart-stage { width: 100%; margin: 18px auto 0; }
+  .public-page .heart-note { padding: 17px 14px 10px; }
+  .public-page .note-preview { font-size: 14px; }
+  .school-legend { inset-inline: 5%; font-size: 10px; gap: 10px; }
+  .public-page .empty-heart { font-size: 38px; }
+  .public-page .wall-empty h3 { font-size: 17px; }
+  .public-page .wall-count { display: block; margin-bottom: 12px !important; font-size: 11px !important; }
+  .public-page .wall-count strong { font-size: 20px; margin-right: 4px; }
+  .public-page .wall-bottom { font-size: 10px; }
+  .scroll-invitation { margin-bottom: 16px; }
+  .write-section { padding-top: 36px; }
+  .write-reveal { grid-template-columns: 1fr; padding: 27px 23px; gap: 24px; }
+  .write-intro h2 { font-size: 24px; }
+  .public-page .intro-copy { font-size: 13px; }
+  .write-action { max-width: none; }
+  .write-action .primary { width: 100%; }
+  .public-page .how-section { margin-top: 37px; gap: 28px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .public-page *, .public-page *::before, .public-page *::after { transition: none !important; }
+  .public-page .heart-note:hover, .public-page .heart-note:focus-visible { transform: rotate(var(--rotation, 0deg)); }
+}

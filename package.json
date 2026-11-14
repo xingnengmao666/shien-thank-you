@@ -1,0 +1,27 @@
+{
+  "name": "shien-thank-you",
+  "version": "1.0.0",
+  "private": true,
+  "license": "MIT",
+  "repository": { "type": "git", "url": "https://github.com/xingnengmao666/shien-thank-you.git" },
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev --ip 127.0.0.1 --port 8787",
+    "setup:local": "node scripts/setup-local.mjs",
+    "db:local": "wrangler d1 migrations apply DB --local",
+    "db:remote": "wrangler d1 migrations apply DB --remote",
+    "deploy": "wrangler deploy",
+    "test": "node --test tests/unit.test.mjs tests/codeget.test.mjs",
+    "test:e2e": "node --test --test-concurrency=1 tests/e2e.test.mjs",
+    "test:browser": "node tests/browser.mjs",
+    "test:motion": "node tests/motion.mjs",
+    "test:landing": "node tests/landing.mjs",
+    "test:notes": "node tests/notes.mjs",
+    "test:codeget": "node tests/codeget-browser.mjs",
+    "check:publish": "node scripts/check-publication.mjs"
+  },
+  "devDependencies": {
+    "playwright": "^1.65.0",
+    "wrangler": "4.161.0"
+  }
+}

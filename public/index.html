@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="把真诚的感谢写给老师，让每一份心意汇成一颗心。">
+  <title>师恩难忘 · 写给老师的感谢</title>
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/styles.css">
+  <link rel="stylesheet" href="/motion.css">
+  <link rel="stylesheet" href="/landing.css">
+  <script src="/app.js" type="module"></script>
+</head>
+<body class="public-page" data-active-school="balanced">
+  <div class="school-atmosphere" aria-hidden="true"><span class="school-original"></span><span class="school-new"></span></div>
+  <header class="site-header wrap">
+    <a class="brand" href="/" aria-label="师恩难忘首页"><svg viewBox="0 0 40 40" aria-hidden="true"><path d="M20 33C8 25 3 17 8 11c4-5 10-3 12 2 2-5 8-7 12-2 5 6 0 14-12 22Z" fill="currentColor"/><path d="m13 19 5 4 9-9" fill="none" stroke="white" stroke-width="2"/></svg><span data-title>师恩难忘</span></a>
+    <nav aria-label="主导航"><a href="#heart-wall">感谢墙</a><a href="#write-section">写寄语</a><a href="/codeget">领验证码</a><a href="/admin" class="admin-link">管理后台</a></nav>
+  </header>
+  <main>
+    <section class="wall-section wrap" id="heart-wall" aria-labelledby="wall-title">
+      <div class="wall-heading"><p class="dedication">写给<span id="teacher-name">敬爱的老师</span></p><h1 id="wall-title">把心意，拼成一颗心</h1><p>您奔赴新的校园，我们把感谢留成一颗心。</p></div>
+      <div class="heart-stage" id="heart-stage">
+        <div class="school-legend"><span class="original-label"><i aria-hidden="true"></i>原校 · 熟悉的课堂</span><span class="new-label"><i aria-hidden="true"></i>新校 · 新的篇章</span></div>
+        <svg class="heart-outline" viewBox="0 0 800 650" aria-hidden="true"><defs><linearGradient id="heart-paper"><stop class="original-paper" offset="0"/><stop class="original-paper" offset=".35"/><stop class="new-paper" offset=".65"/><stop class="new-paper" offset="1"/></linearGradient><linearGradient id="heart-thread"><stop offset="0" stop-color="#67d027"/><stop offset=".35" stop-color="#67d027"/><stop offset=".65" stop-color="#94070a"/><stop offset="1" stop-color="#94070a"/></linearGradient></defs><path d="M400 590C290 510 55 330 75 177 95 29 300 29 400 164 500 29 705 29 725 177 745 330 510 510 400 590Z" fill="url(#heart-paper)" stroke="url(#heart-thread)"/></svg>
+        <div id="notes" aria-label="已审核的感谢便签"></div>
+        <div class="wall-empty" id="wall-empty"><span class="empty-heart" aria-hidden="true">♡</span><h3>第一份心意，等你写下</h3><p>审核通过的感谢会在这里汇成爱心。</p></div>
+      </div>
+      <div class="wall-foot"><p class="wall-count"><strong id="approved-count">0</strong> 份感谢已点亮</p><div class="wall-bottom"><p><span class="live-dot" aria-hidden="true"></span><span id="sync-status" role="status">正在读取感谢墙…</span></p><p>点击便签，单独阅读这份心意</p></div><a class="scroll-invitation" href="#write-section">下翻，写下你的寄语 <span aria-hidden="true">↓</span></a></div>
+    </section>
+    <section class="write-section wrap" id="write-section" aria-labelledby="write-section-title" tabindex="-1">
+      <div class="write-reveal" id="write-reveal" inert>
+        <div class="write-intro"><p class="small-title">把感谢，送往下一段旅程</p><h2 id="write-section-title">有些话，想亲口说给您听。</h2><p class="intro-copy" id="homepage-copy">那些被照亮的日子，值得一句认真说出的谢谢。把你的感谢写在这里，让心意慢慢汇成一颗心。</p></div>
+        <div class="write-action"><button class="primary write-button" id="write-button" disabled>写下我的感谢 <span aria-hidden="true">＋</span></button><p class="quiet" id="submission-hint">正在读取参与信息…</p><a class="participation-link" href="#how-to">了解参与方式</a></div>
+      </div>
+    </section>
+    <section class="how-section wrap" id="how-to" aria-labelledby="how-title">
+      <div class="how-intro"><p class="small-title">一份感谢，三步送达</p><h2 id="how-title">你记得的那一刻，<br>老师也值得知道。</h2></div>
+      <ol class="steps"><li><span class="step-number">1</span><div><h3>确认你的身份</h3><p>先<a href="/codeget">领取专属验证码</a>，或使用管理员发放的验证码，再选择班级、填写本名完成验证。</p></div></li><li><span class="step-number">2</span><div><h3>写下真实的感谢</h3><p>一句鼓励、一次帮助，或一个一直想说谢谢的瞬间。</p></div></li><li><span class="step-number">3</span><div><h3>让心意被看见</h3><p>管理员审核后，感谢便签会加入这面爱心墙。</p></div></li></ol>
+    </section>
+  </main>
+  <footer class="site-footer wrap"><div><span><span data-title>师恩难忘</span> · 感谢每一次用心的教导</span><p class="open-source-note">本项目采用 MIT 协议开源 · <a href="https://github.com/xingnengmao666/shien-thank-you" target="_blank" rel="noopener noreferrer">GitHub 源码</a></p></div><a href="/admin">管理员入口</a></footer>
+  <dialog id="write-dialog" aria-labelledby="write-title">
+    <button class="dialog-close" data-close aria-label="关闭">×</button><p class="small-title">写给老师的一封短笺</p><h2 id="write-title">把你的感谢留在这里</h2>
+    <form id="verify-form"><p class="form-help">请使用专属验证码完成身份确认。还没有验证码？<a href="/codeget">输入本名领取</a>。</p><label>真实姓名<input name="real_name" required maxlength="80" autocomplete="name"></label><label>所属班级<select name="class_id" id="verify-class" required><option value="">请选择班级</option></select></label><label>专属验证码<input name="student_code" required minlength="8" maxlength="128" autocomplete="off" type="password"></label><button class="primary full-width">验证身份，开始书写</button></form>
+    <form id="message-form" hidden><p class="verified-badge" id="verified-name"></p><label>想对老师说的话<textarea name="content" id="message-content" minlength="10" maxlength="1000" rows="7" required placeholder="老师，我一直记得…"></textarea></label><p class="field-meta"><span>10–1000 字，一人一份真诚表达</span><span id="char-count">0 / 1000</span></p><button class="primary full-width">提交感谢，等待审核</button></form>
+    <div id="submit-success" hidden><div class="success-mark" aria-hidden="true">✓</div><h3>心意已送达</h3><p>感谢您的真诚表达！留言已提交，等待管理员审核。</p><button class="primary full-width" data-close>回到感谢墙</button></div>
+    <p class="form-status" id="form-status" role="status"></p>
+  </dialog>
+  <dialog id="read-dialog" class="paper-surface" aria-labelledby="read-name"><button class="dialog-close" data-close aria-label="关闭">×</button><p class="small-title">一份写给老师的感谢</p><blockquote id="read-content"></blockquote><p id="read-name" class="note-signature"></p><p id="read-date" class="quiet"></p></dialog>
+</body>
+</html>

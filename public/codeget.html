@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="输入本名，一次领取写给老师的专属寄语验证码。">
+  <title>领取寄语验证码 · 师恩难忘</title>
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/styles.css">
+  <link rel="stylesheet" href="/motion.css">
+  <link rel="stylesheet" href="/landing.css">
+  <link rel="stylesheet" href="/codeget.css">
+  <script src="/codeget.js" type="module"></script>
+</head>
+<body class="public-page codeget-page" data-active-school="balanced">
+  <div class="school-atmosphere" aria-hidden="true"><span class="school-original"></span><span class="school-new"></span></div>
+  <header class="site-header wrap"><a class="brand" href="/">♡ 师恩难忘</a><nav aria-label="主导航"><a href="/">返回感谢墙</a></nav></header>
+  <main class="codeget-main wrap">
+    <section class="codeget-card" aria-labelledby="codeget-title">
+      <p class="small-title">一份属于你的心意</p><h1 id="codeget-title">领取寄语验证码</h1>
+      <p class="form-help">填写学生名单中的本名，领取专属验证码，再回到感谢墙写下寄语。</p>
+      <form id="codeget-form">
+        <label>你的本名<input name="real_name" required maxlength="80" autocomplete="name" placeholder="请填写真实姓名"></label>
+        <label id="codeget-class-field" hidden>所属班级<select name="class_id" id="codeget-class"><option value="">请选择班级</option></select></label>
+        <p class="codeget-notice" id="codeget-notice">每位学生、每个 IP 和浏览器限领取一次。验证码仅在成功后显示一次，请尽快截图并复制保存；领取后原验证码失效。同一校园或家庭网络的其他同学，请联系管理员获取验证码。</p>
+        <p class="quiet">为防止重复领取，本站使用设备 Cookie 和浏览器指纹。每次领取尝试的姓名、时间、结果、实际 IP、浏览器指纹及设备 Cookie 的 HMAC 标识会留存，仅供主管理员核查。</p>
+        <button class="primary full-width" id="codeget-button" aria-describedby="codeget-notice" disabled>领取我的验证码</button>
+      </form>
+      <div id="codeget-result" hidden>
+        <svg class="codeget-seal" viewBox="0 0 48 48" aria-hidden="true"><circle cx="24" cy="24" r="21"/><path d="m14 24 7 7 13-14"/></svg>
+        <p class="verified-badge" id="codeget-identity"></p>
+        <label>你的专属验证码<textarea id="codeget-code" rows="2" readonly autocomplete="off" spellcheck="false" aria-describedby="codeget-save-reminder"></textarea></label>
+        <div class="codeget-save-reminder" id="codeget-save-reminder"><strong>领取成功，请尽快截图保存邀请码</strong><p>请将姓名、班级和完整邀请码一起截图，并复制备份。刷新或关闭页面后无法再次查看，请妥善保密；遗失时请联系管理员。</p></div>
+        <button class="primary full-width" id="copy-code" type="button">复制验证码</button>
+        <a class="participation-link" href="/#write-section">已保存，去写寄语 →</a>
+      </div>
+      <p class="form-status" id="codeget-status" role="status" aria-live="polite"></p>
+      <noscript><p class="form-status">请启用 JavaScript 后领取验证码。</p></noscript>
+    </section>
+  </main>
+  <footer class="site-footer wrap"><span>师恩难忘 · 把感谢留成一颗心</span><a href="/">返回首页</a></footer>
+</body>
+</html>

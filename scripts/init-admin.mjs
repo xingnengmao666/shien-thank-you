@@ -1,0 +1,17 @@
+import { randomBytes } from 'node:crypto';
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+const remote = process.argv.includes('--remote');
+const base = process.argv.find(a => /^https?:\/\//.test(a)) || 'http://127.0.0.1:8787';
+const username = process.env.ADMIN_USERNAME || 'admin';
+const localVars = existsSync('.dev.vars') ? Object.fromEntries(readFileSync('.dev.vars','utf8').split(/\r?\n/).filter(s => s.includes('=')).map(s => { const at = s.indexOf('='); return [s.slice(0,at),s.slice(at+1)]; })) : {};
+const remoteVars = remote && existsSync('.local/cloudflare-secrets.json') ? JSON.parse(readFileSync('.local/cloudflare-secrets.json','utf8')) : {};
+const bootstrap = process.env.BOOTSTRAP_TOKEN || (remote ? remoteVars.BOOTSTRAP_TOKEN : localVars.BOOTSTRAP_TOKEN);
+if (!bootstrap) throw new Error('缺少 BOOTSTRAP_TOKEN。先设置对应的本地变量或 Cloudflare Secret。');
+const password = randomBytes(24).toString('base64url');
+const response = await fetch(`${base}/api/admin/bootstrap`, { method:'POST', headers:{'Content-Type':'application/json','Origin':new URL(base).origin,'X-Bootstrap-Token':bootstrap}, body:JSON.stringify({username,password}) });
+const data = await response.json();
+if (!response.ok) throw new Error(data.error);
+mkdirSync('.local',{recursive:true});
+const path = `.local/${remote ? 'production' : 'local'}-admin.json`;
+writeFileSync(path, JSON.stringify({url:base,username,password},null,2)+'\n',{mode:0o600});
+console.log(`管理员已初始化。登录凭据保存在 ${path}，请妥善保管。`);

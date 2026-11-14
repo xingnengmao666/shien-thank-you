@@ -1,0 +1,13 @@
+import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
+const login=JSON.parse(readFileSync('.local/production-admin.json','utf8')),base=login.url;
+const common={'Content-Type':'application/json',Origin:new URL(base).origin};
+const response=await fetch(`${base}/api/admin/login`,{method:'POST',headers:common,body:JSON.stringify({username:login.username,password:login.password})});
+assert.equal(response.status,200); const auth=await response.json();
+const headers={...common,Cookie:response.headers.get('set-cookie').split(';')[0],'X-CSRF-Token':auth.csrf_token};
+const dashboard=await (await fetch(`${base}/api/admin/dashboard`,{headers})).json();
+assert.equal(dashboard.students_total,0); assert.equal(dashboard.messages_total,0);
+const published=await (await fetch(`${base}/api/messages`)).json(); assert.equal(published.total,0);
+const bootstrap=await fetch(`${base}/api/admin/bootstrap`,{method:'POST',headers:common,body:'{}'}); assert.equal(bootstrap.status,403);
+const logout=await fetch(`${base}/api/admin/logout`,{method:'POST',headers}); assert.equal(logout.status,200);
+console.log(JSON.stringify({login:'passed',test_data_removed:true,students:dashboard.students_total,messages:dashboard.messages_total,public_notes:published.total,bootstrap:'disabled',logout:'passed'},null,2));

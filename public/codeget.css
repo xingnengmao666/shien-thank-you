@@ -1,0 +1,15 @@
+.codeget-page { min-height: 100svh; display: flex; flex-direction: column; }
+.codeget-main { flex: 1; display: grid; place-items: center; padding-block: 48px; }
+.codeget-card { width: min(100%, 480px); padding: 36px; background: #ffffffed; border: 1px solid var(--line); border-radius: 10px; border-top: 3px solid transparent; background-image: linear-gradient(#fff, #fff), linear-gradient(90deg, #67d027, #94070a); background-origin: border-box; background-clip: padding-box, border-box; box-shadow: 0 12px 36px #2931280a; }
+.codeget-card h1 { font: 500 32px/1.5 "STKaiti", "KaiTi", serif; margin-bottom: 14px; }
+.codeget-notice { font-size: 12px; line-height: 1.9; padding: 12px 14px; background: var(--pale); border-radius: 5px; }
+.codeget-card .quiet { margin-block: 12px 20px; }
+.codeget-card .verified-badge { overflow-wrap: anywhere; }
+#codeget-code { font-family: ui-monospace, Consolas, monospace; font-size: 14px; line-height: 1.7; resize: none; overflow-wrap: anywhere; word-break: break-all; color: var(--ink); }
+.codeget-save-reminder { padding: 14px 16px; margin-bottom: 18px; border-left: 3px solid var(--school-new); background: var(--pale); border-radius: 0 5px 5px 0; }
+.codeget-save-reminder strong { font-size: 14px; color: var(--school-new); }
+.codeget-save-reminder p { margin: 7px 0 0; font-size: 12px; line-height: 1.8; color: var(--muted); }
+.codeget-seal { display: block; width: 48px; height: 48px; margin: 0 auto 18px; fill: none; stroke: #326d14; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+#codeget-result:not([hidden]) .codeget-seal path { stroke-dasharray: 34; animation: seal-draw 500ms linear both; }
+@keyframes seal-draw { from { stroke-dashoffset: 34; } to { stroke-dashoffset: 0; } }
+@media (max-width: 700px) { .codeget-main { padding-block: 28px; } .codeget-card { padding: 25px 22px; } .codeget-card h1 { font-size: 27px; } }

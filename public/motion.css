@@ -1,0 +1,43 @@
+/* Paper texture and layered shadows adapted from normal-pages' graduation wall. */
+:root{--motion-time:200ms;--note-shadow:0 1px 1px #183c7210,0 6px 14px #183c7212}
+button,a,input,select,textarea{transition:background-color var(--motion-time) linear,color var(--motion-time) linear,border-color var(--motion-time) linear,box-shadow var(--motion-time) linear,opacity var(--motion-time) linear}
+button:active:not(:disabled){scale:.98}
+.heart-note{--note-paper:#e6f0ff;background:var(--note-paper);border:1px solid #aecbea70;box-shadow:var(--note-shadow);isolation:isolate;transition:left 260ms linear,top 260ms linear,width 260ms linear,height 260ms linear,transform 200ms linear,box-shadow 200ms linear,background-color 200ms linear}
+.note-tone-0{--note-paper:#dcecff}.note-tone-1{--note-paper:#f5faff}.note-tone-2{--note-paper:#e6f1ff}.note-tone-3{--note-paper:#cee2fa}
+.heart-note::after,.paper-surface::after{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;background-image:repeating-linear-gradient(0deg,#173c7206 0 1px,transparent 1px 4px),radial-gradient(120% 90% at 8% 0%,#ffffff90,transparent 62%);z-index:0}
+.heart-note::before{top:2px;width:30%;height:8%;min-height:4px;max-height:12px;background:#a6c5e67a;border-inline:1px solid #ffffff66;transform:translateX(-50%) rotate(-4deg);clip-path:polygon(3% 0,100% 5%,97% 100%,0 95%);z-index:2}
+.note-preview,.note-author{position:relative;z-index:1}
+.heart-note:hover,.heart-note:focus-visible{transform:translate(-50%,calc(-50% - 3px)) rotate(0deg);box-shadow:0 2px 3px #183c7210,0 14px 28px #183c7222;z-index:2}
+.heart-note.note-enter{animation:note-arrive 320ms linear both}
+@keyframes note-arrive{from{opacity:0;scale:.94;translate:0 8px}to{opacity:1;scale:1;translate:0 0}}
+.paper-surface{position:relative;isolation:isolate;background:#edf5ff;box-shadow:var(--note-shadow)}
+.paper-surface>*{position:relative;z-index:1}
+.paper-surface>.dialog-close{position:absolute;z-index:3}
+#read-dialog{background:#edf5ff;border-color:#b9d1ed;border-radius:5px;box-shadow:0 2px 6px #183c721a,0 20px 50px #183c7230}
+.sending-paper{position:absolute;z-index:5;pointer-events:none;border:1px solid #b9d1ed;border-radius:2px;padding:20px;overflow:hidden;transform-origin:center}
+.sending-paper span{display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;overflow:hidden;white-space:pre-wrap;overflow-wrap:anywhere;font-family:"STKaiti","KaiTi",serif;font-size:17px;line-height:1.6}
+/* Native discrete transitions retain the top layer during both closing and opening. */
+dialog{opacity:0;transform:translateY(12px) scale(.98);transition:opacity 200ms linear,transform 200ms linear,display 200ms linear allow-discrete,overlay 200ms linear allow-discrete}
+dialog[open]{opacity:1;transform:none}
+dialog::backdrop{background-color:#183b6800;transition:background-color 200ms linear,display 200ms linear allow-discrete,overlay 200ms linear allow-discrete}
+dialog[open]::backdrop{background-color:#183b6866}
+@starting-style{dialog[open]{opacity:0;transform:translateY(12px) scale(.98)}dialog[open]::backdrop{background-color:#183b6800}}
+.page-progress{position:fixed;inset:0 0 auto;height:3px;z-index:50;opacity:0;overflow:hidden;pointer-events:none;background:#dce9fa80;transition:opacity 140ms linear}
+.page-progress span{display:block;width:28%;height:100%;background:#3d7dcc;transform:translateX(-100%)}
+.is-loading .page-progress{opacity:1}
+.is-loading .page-progress span{animation:loading-line 1100ms linear infinite}
+@keyframes loading-line{to{transform:translateX(460%)}}
+.is-busy{position:relative}
+.is-busy::after{content:"";display:inline-block;flex-shrink:0;width:13px;height:13px;margin-left:9px;border:1.5px solid currentColor;border-right-color:transparent;border-radius:50%;vertical-align:-2px;animation:loading-spin 750ms linear infinite}
+@keyframes loading-spin{to{rotate:360deg}}
+.admin-view{position:relative}
+.admin-view.is-region-loading::before{content:"";position:absolute;inset:-10px 0 auto;height:2px;z-index:1;background:linear-gradient(90deg,transparent 15%,#528bd4 45%,transparent 75%);background-size:200% 100%;animation:region-loading 1100ms linear infinite}
+@keyframes region-loading{to{background-position:-200% 0}}
+.admin-view.is-region-loading>.admin-panel,.admin-view.is-region-loading>.stats-grid{opacity:.55;transition:opacity 160ms linear}
+.admin-view>.admin-panel,.admin-view>.stats-grid{transition:opacity 160ms linear}
+.admin-view:not([hidden]),.login-shell:not([hidden]),.admin-shell:not([hidden]){animation:view-enter 200ms linear}
+@keyframes view-enter{from{opacity:0;translate:0 5px}to{opacity:1;translate:0 0}}
+.form-status:not(:empty){animation:status-enter 180ms linear}
+@keyframes status-enter{from{opacity:0}to{opacity:1}}
+@supports not (transition-behavior:allow-discrete){dialog[open]{animation:view-enter 200ms linear}}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}.heart-note:hover,.heart-note:focus-visible{transform:translate(-50%,-50%) rotate(var(--rotation))}.is-loading .page-progress span{width:100%;transform:none}.is-region-loading::before{background:#528bd4!important}}
