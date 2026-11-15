@@ -92,13 +92,14 @@ test('Moderator role cannot manage roster; missing CSRF and expired sessions fai
   env.DB.prepare = ()=>({bind:()=>({first:async()=>null})});
   await assert.rejects(()=>adminAuth(request,env), e=>e.status===401);
 });
-test('Heart rows preserve every message in stable order and grow without shrinking columns', () => {
-  for (const count of [0,1,2,3,4,5,7,30,44,100,250,1000]) for (const columns of [1,2,3,4]) {
+test('Heart rows preserve every message in stable order with balanced lobes and a tapered tip', () => {
+  for (const count of [0,1,2,3,4,5,7,12,24,30,44,100,250,1000]) for (const columns of [1,2,3,4,6,8]) {
     const rows = heartRows(count, columns); assert.deepEqual(rows, heartRows(count, columns));
     assert.deepEqual(rows.flat(), Array.from({length: count}, (_, i) => i));
     assert.ok(rows.every(row => row.length >= 1 && row.length <= columns));
-    if (count > 2 && columns > 1) { assert.equal(rows[0].length, 2); assert.equal(rows.at(-1).length, 1); }
+    if (count > 2 && columns > 1) { assert.equal(rows[0].length % 2, 0); assert.equal(rows.at(-1).length, 1); }
   }
+  assert.deepEqual(heartRows(30, 8).map(row => row.length), [4, 7, 7, 7, 4, 1]);
 });
 test('Names are masked by default; input limits count Unicode codepoints', () => {
   assert.equal(displayName('张小明','masked'),'张同学'); assert.equal(displayName('张小明','anonymous'),'一位同学'); assert.equal(displayName('张小明','full'),'张小明');

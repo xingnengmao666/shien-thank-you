@@ -12,7 +12,8 @@ function sizeHeart() {
   outline.setAttribute('preserveAspectRatio', stage.classList.contains('has-notes') ? 'none' : 'xMidYMid meet');
   if (!stage.classList.contains('has-notes')) return;
   const body = $('#notes').scrollHeight, width = stage.clientWidth;
-  const fraction = noteButtons.length === 1 ? .5 : .68, start = noteButtons.length === 1 ? .28 : .12;
+  const compact = stage.classList.contains('compact-heart');
+  const fraction = noteButtons.length === 1 ? .5 : compact ? .8 : .68, start = noteButtons.length === 1 ? .28 : compact ? .1 : .12;
   const height = Math.max(width / 1.3, body / fraction);
   const top = height * start + (height * fraction - body) / 2;
   stage.style.setProperty('--heart-top-space', `${top}px`);
@@ -45,21 +46,26 @@ function readNote(message, campus) {
 }
 function arrangeNotes() {
   const stage = $('#heart-stage'), wall = $('#notes');
+  const available = $('#heart-wall').clientWidth;
+  const compact = noteButtons.length >= 12 && available >= 640;
   stage.classList.toggle('has-notes', noteButtons.length > 0);
+  stage.classList.toggle('compact-heart', compact);
   if (!noteButtons.length) { stage.style.removeProperty('--wall-width'); stage.style.removeProperty('--note-width'); wall.replaceChildren(); sizeHeart(); return; }
   const oldPositions = new Map(noteButtons.filter(note => note.isConnected && !note.classList.contains('note-enter')).map(note => [note, note.getBoundingClientRect()]));
   const focused = document.activeElement;
-  const available = $('#heart-wall').clientWidth;
-  const columns = Math.max(1, Math.min(4, Math.floor((available * .8 + 24) / 224), Math.ceil(Math.sqrt(noteButtons.length))));
-  const width = Math.min(available, noteButtons.length === 1 ? 520 : (columns * 210 + (columns - 1) * 24) / .8);
+  const gap = compact ? 14 : 24;
+  const columns = Math.max(1, Math.min(8, Math.floor((available * .8 + gap) / ((compact ? 100 : 200) + gap)), Math.ceil(Math.sqrt(noteButtons.length) * (compact ? 1.6 : 1))));
+  const width = Math.min(available, noteButtons.length === 1 ? 520 : (columns * (compact ? 130 : 210) + (columns - 1) * gap) / .8);
   stage.style.setProperty('--wall-width', `${width}px`);
-  stage.style.setProperty('--note-width', `${Math.min(220, (width * .8 - (columns - 1) * 24) / columns)}px`);
+  stage.style.setProperty('--note-gap', `${gap}px`);
+  stage.style.setProperty('--note-width', `${Math.min(220, (width * .8 - (columns - 1) * gap) / columns)}px`);
   const rows = [...wall.children];
   heartRows(noteButtons.length, columns).forEach((indices, r) => {
     const row = rows[r] || document.createElement('div'); row.className = 'note-row';
     let anchor = row.firstElementChild;
     indices.forEach((index, position) => {
       const button = noteButtons[index];
+      button.classList.toggle('note-lobe-start', r === 0 && indices.length > 2 && position === indices.length / 2);
       button.dataset.campus = indices.length === 1 && columns === 1 && noteButtons.length > 1 ? (index % 2 ? 'new' : 'original') : (position < indices.length / 2 && indices.length > 1 ? 'original' : 'new');
       if (button !== anchor) row.insertBefore(button, anchor);
       anchor = button.nextElementSibling;
@@ -69,6 +75,7 @@ function arrangeNotes() {
   for (const row of rows) if (!row.children.length) row.remove();
   for (const note of noteButtons) {
     const content = note.querySelector('.note-preview'), toggle = note.querySelector('.note-toggle');
+    note.querySelector('.note-read').textContent = compact ? '阅读' : '单独阅读';
     if (!note.classList.contains('is-expanded') && !content.getAnimations().length) note.hasOverflow = content.scrollHeight > content.clientHeight + 1;
     toggle.hidden = !note.hasOverflow;
   }

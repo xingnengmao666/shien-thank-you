@@ -55,13 +55,19 @@
 .public-page .wall-heading > p:last-child { font-size: 13px; margin: 9px 0 0; }
 .public-page .heart-stage { width: min(800px, 100%, max(280px, calc((100svh - 385px) * 1.3))); align-self: center; margin: 23px auto 0; }
 .public-page .heart-stage.has-notes { width: var(--wall-width); aspect-ratio: auto; padding-block: var(--heart-top-space, 80px) var(--heart-bottom-space, 100px); margin-block: 28px 20px; }
-.has-notes #notes { position: relative; padding-inline: 10%; display: grid; gap: 26px; }
+.has-notes #notes { position: relative; padding-inline: 10%; display: grid; gap: var(--note-gap, 26px); }
 .public-page .has-notes .heart-outline { inset: 0; width: 100%; height: 100%; }
-.note-row { display: flex; justify-content: center; align-items: start; gap: 24px; }
+.note-row { display: flex; justify-content: center; align-items: start; gap: var(--note-gap, 24px); }
 .note-row:first-child { justify-content: space-around; }
+.note-row:first-child:has(.note-lobe-start) { justify-content: center; }
+.note-lobe-start { margin-left: var(--note-width); }
 .public-page .heart-note { position: relative; flex: 0 0 var(--note-width); width: var(--note-width); height: auto; min-height: 110px; padding: 17px 16px 10px; overflow: visible; transform: rotate(var(--rotation, 0deg)); transition: transform 200ms linear, box-shadow 200ms linear, background-color 200ms linear, color 200ms linear; }
 .public-page .heart-note:hover, .public-page .heart-note:focus-visible { transform: translateY(-3px) rotate(0deg); }
 .public-page .note-preview { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; white-space: pre-wrap; overflow-wrap: anywhere; font-size: 14px; line-height: 1.7; }
+.public-page .compact-heart .heart-note { min-height: 100px; padding: 12px 10px 8px; }
+.public-page .compact-heart .note-preview { -webkit-line-clamp: 2; }
+.public-page .compact-heart .note-actions { gap: 6px; }
+.public-page .compact-heart .note-actions button { min-height: 24px; font-size: 10px; }
 .public-page .is-expanded .note-preview { display: block; -webkit-line-clamp: unset; overflow: visible; }
 .public-page .note-author { display: block; white-space: normal; overflow-wrap: anywhere; font-size: 11px; line-height: 1.6; margin-top: 7px; opacity: .9; }
 .note-actions { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: 6px; }

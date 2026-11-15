@@ -11,7 +11,8 @@ page.on('pageerror', error => errors.push(error.message));
 const className = `[便签验收]${tag}`, label = `【便签验收${tag}，测试结束删除】`;
 const contents = [label + '祝您在新的学校中前程似锦，万事顺利。', label + '感谢您的耐心教导。'.repeat(130), label + '\n' + '记得您在课堂上的鼓励。\n'.repeat(100)];
 for (let i = 1; i < contents.length; i++) contents[i] = [...contents[i]].slice(0, 994).join('') + '最后一行结束';
-mkdirSync('test-results', { recursive: true });
+contents.push(...Array.from({ length: 27 }, (_, i) => label + `第 ${i + 4} 份感谢。谢谢老师的耐心教导，祝您在新的校园一切顺利。`));
+mkdirSync('.local/notes', { recursive: true });
 let headers, group;
 async function json(response) { assert.ok(response.ok(), `API failed: ${response.status()} ${await response.text()}`); return response.json(); }
 async function ready(count) {
@@ -54,38 +55,44 @@ try {
   await json(await context.request.post(`${base}/api/admin/students/import`, { headers, data: { csv: 'real_name,class_name,student_code\n' + names.map((n, i) => `${n},${className},${codes[i]}`).join('\n') } }));
   let small;
   for (let i = 0; i < contents.length; i++) {
-    const verified = await json(await context.request.post(`${base}/api/student/verify`, { headers: { Origin: base }, data: { real_name: names[i], class_id: group.id, student_code: codes[i] } }));
-    await json(await context.request.post(`${base}/api/messages`, { headers: { Origin: base, Authorization: `Bearer ${verified.credential}` }, data: { content: contents[i] } }));
+    const studentHeaders = { Origin: base, 'CF-Connecting-IP': `203.0.113.${i + 1}` };
+    const verified = await json(await context.request.post(`${base}/api/student/verify`, { headers: studentHeaders, data: { real_name: names[i], class_id: group.id, student_code: codes[i] } }));
+    await json(await context.request.post(`${base}/api/messages`, { headers: { ...studentHeaders, Authorization: `Bearer ${verified.credential}` }, data: { content: contents[i] } }));
     const message = (await json(await context.request.get(`${base}/api/admin/messages?class_id=${group.id}`))).items.find(m => m.content === contents[i]);
     await json(await context.request.post(`${base}/api/admin/messages/${message.id}/approve`, { headers }));
     await ready(i + 1);
     const size = await page.locator('#heart-stage').boundingBox();
-    if (i === 0) { small = size; await page.screenshot({ path: 'test-results/local-note-complete-single.png' }); }
-    else assert.ok(size.width >= small.width && size.height > small.height, 'Heart did not expand for more content');
+    if (i === 0) { small = size; await page.screenshot({ path: '.local/notes/single.png' }); }
+    else if (i < 3) assert.ok(size.width >= small.width && size.height > small.height, 'Heart did not expand for more content');
+    if ([24, 30].includes(i + 1)) {
+      await page.screenshot({ path: `.local/notes/compact-${i + 1}.png`, fullPage: true });
+      assert.ok(size.width / size.height >= 1, `${i + 1} collapsed notes made the desktop heart too tall: ${size.width} × ${size.height}`);
+      console.log(`${i + 1} collapsed notes: ${Math.round(size.width)} × ${Math.round(size.height)}`);
+    }
   }
   assert.ok(await page.locator('.heart-note').evaluateAll(notes => notes.every(note => note.offsetHeight < 220)), 'Collapsed notes are too large');
   const originalCurve = await page.locator('.heart-outline path').getAttribute('d');
   assert.ok(!originalCurve.includes('L'), 'The original curved heart acquired straight edges');
-  await page.screenshot({ path: 'test-results/local-notes-compact.png', fullPage: true });
+  await page.screenshot({ path: '.local/notes/compact.png', fullPage: true });
   const compact = await page.locator('#heart-stage').boundingBox();
   await expandAll();
   assert.equal(await page.locator('.heart-outline path').getAttribute('d'), originalCurve, 'Expansion changed the heart outline');
   assert.ok((await page.locator('#heart-stage').boundingBox()).height > compact.height, 'The heart did not grow with expansion');
   await complete();
-  await page.screenshot({ path: 'test-results/local-notes-complete-desktop.png', fullPage: true });
+  await page.screenshot({ path: '.local/notes/expanded-desktop.png', fullPage: true });
   const order = await page.locator('.heart-note').evaluateAll(notes => notes.map(n => n.dataset.messageId));
   const toggle = page.locator('.note-toggle').nth(1);
   await toggle.focus(); await page.keyboard.press('Enter'); await settle();
   assert.equal(await toggle.getAttribute('aria-expanded'), 'false');
   assert.ok(await page.locator('.heart-note').nth(1).evaluate(note => note.offsetHeight < 220));
-  await ready(3); assert.deepEqual(await page.locator('.heart-note').evaluateAll(notes => notes.map(n => n.dataset.messageId)), order); await expandAll();
+  await ready(contents.length); assert.deepEqual(await page.locator('.heart-note').evaluateAll(notes => notes.map(n => n.dataset.messageId)), order); await expandAll();
   for (const width of [320, 390, 768]) {
     await page.setViewportSize({ width, height: 844 });
     await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
     await page.evaluate(async () => { await Promise.all([...document.querySelectorAll('.heart-note')].flatMap(el => el.getAnimations()).map(a => a.finished.catch(() => {}))); });
     await complete();
     if (width <= 390) assert.ok(await page.locator('.heart-note').evaluateAll(notes => notes.every(note => note.style.getPropertyValue('--rotation') === '0deg')), 'Single-column notes must stay upright inside the heart');
-    if (width === 390) await page.screenshot({ path: 'test-results/local-notes-complete-mobile.png', fullPage: true });
+    if (width === 390) await page.screenshot({ path: '.local/notes/expanded-mobile.png', fullPage: true });
   }
   assert.deepEqual(errors, []);
   console.log('便签验收通过：紧凑预览、键盘展开/收起、1000 字与多行全文可读、署名完整、无重叠、原有曲线不变、爱心随数量与展开同步扩展、刷新顺序稳定、320/390/768px 可读。真实本地 D1 测试数据已清理。');
