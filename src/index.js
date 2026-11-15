@@ -9,7 +9,7 @@ function secure(response, isAPI = false) {
   headers.set('Referrer-Policy', 'same-origin');
   headers.set('X-Frame-Options', 'DENY');
   headers.set('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
-  headers.set('Content-Security-Policy', "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self'; font-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'");
+  headers.set('Content-Security-Policy', "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data: https://mirror.qlzx.qzz.io; connect-src 'self'; font-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'");
   headers.set('Strict-Transport-Security', 'max-age=31536000');
   if (isAPI) headers.set('Cache-Control', 'no-store');
   return new Response(response.body, { status: response.status, statusText: response.statusText, headers });
@@ -21,6 +21,22 @@ export default {
     try {
       if (!api) {
         if (!['GET','HEAD'].includes(request.method)) throw new HttpError(405, '不支持该请求方式。');
+        if (url.pathname === '/theme.css') {
+          const assetHeaders = new Headers(request.headers);
+          // A cached or partial stylesheet cannot be reused across visitor countries.
+          for (const name of ['If-None-Match', 'If-Modified-Since', 'Range', 'If-Range']) assetHeaders.delete(name);
+          assetHeaders.set('Accept-Encoding', 'identity');
+          const response = await env.ASSETS.fetch(new Request(request, { headers: assetHeaders }));
+          const headers = new Headers(response.headers);
+          headers.set('Cache-Control', 'no-store');
+          for (const name of ['ETag', 'Last-Modified', 'Content-Length']) headers.delete(name);
+          let content = response.body;
+          if (request.method === 'GET' && response.status === 200 && request.cf?.country === 'CN') {
+            content = (await response.text()).replace("url('/images/sakura-classroom.png')", `url('https://mirror.qlzx.qzz.io/${url.origin}/images/sakura-classroom.png')`);
+            headers.delete('Content-Encoding');
+          }
+          return secure(new Response(content, { status: response.status, headers }));
+        }
         if (['/codeget', '/codeget/', '/codeget.html'].includes(url.pathname)) {
           const response = await env.ASSETS.fetch(new Request(new URL('/codeget.html', url), request));
           const headers = new Headers(response.headers);

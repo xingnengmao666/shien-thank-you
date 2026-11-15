@@ -1,6 +1,7 @@
 import { chromium } from 'playwright';
 import assert from 'node:assert/strict';
 import { mkdirSync, readFileSync } from 'node:fs';
+import worker from '../src/index.js';
 
 assert.ok(!process.env.TEST_BASE_URL, 'Theme checks run only against the local Worker');
 const base = 'http://127.0.0.1:8787';
@@ -20,9 +21,18 @@ async function theme(page, value) {
   await page.waitForFunction(value => document.documentElement.dataset.theme === value, value);
   assert.ok((await page.locator('[data-theme-select]').evaluateAll(selects => selects.map(select => select.value))).every(selected => selected === value));
 }
-async function background(page) {
-  assert.match(await page.locator('body').evaluate(el => getComputedStyle(el, '::before').backgroundImage), /\/images\/sakura-classroom\.png/);
+async function background(page, mirrored = false) {
+  const source = `${mirrored ? 'https://mirror.qlzx.qzz.io/' : ''}${base}/images/sakura-classroom.png`;
+  assert.equal(await page.locator('body').evaluate(el => getComputedStyle(el, '::before').backgroundImage), `url("${source}")`);
   assert.equal(await page.locator('body').evaluate(el => getComputedStyle(el, '::before').pointerEvents), 'none');
+}
+async function region(context, country) {
+  await context.route('**/theme.css', async route => {
+    const request = new Request(route.request().url());
+    request.cf = { country };
+    const response = await worker.fetch(request, { ASSETS: { fetch: async () => new Response(readFileSync('public/theme.css'), { headers: { 'Content-Type': 'text/css' } }) } });
+    await route.fulfill({ status: response.status, headers: Object.fromEntries(response.headers), body: await response.text() });
+  });
 }
 async function hint(page, animated = true) {
   await page.clock.fastForward(800);
@@ -40,6 +50,7 @@ async function hint(page, animated = true) {
   assert.ok(box.y >= 80 && box.y < viewport.height / 4 && box.width <= 360 && box.height <= 160, 'Keep the hint small and near the top');
 }
 try {
+  await region(context, 'US');
   const page = await open(context);
   assert.ok(await page.locator('#theme-hint').isHidden(), 'Do not show the hint immediately');
   await hint(page);
@@ -133,6 +144,7 @@ try {
 
   const unavailable = await browser.newContext({ reducedMotion: 'reduce' });
   try {
+    await region(unavailable, 'US');
     await unavailable.addInitScript(() => Object.defineProperty(window, 'localStorage', { get() { throw new DOMException('Storage disabled', 'SecurityError'); } }));
     const quiet = await open(unavailable);
     await theme(quiet, 'sakura');
@@ -144,6 +156,27 @@ try {
     await theme(quiet, 'sakura');
     assert.equal(await quiet.locator('.heart-outline path').evaluate(el => getComputedStyle(el).animationName), 'none');
   } finally { await unavailable.close(); }
+  const mainland = await browser.newContext();
+  try {
+    const images = [];
+    await mainland.addInitScript(() => {
+      window.backgroundPolicyErrors = [];
+      addEventListener('securitypolicyviolation', event => window.backgroundPolicyErrors.push(event.violatedDirective));
+    });
+    await region(mainland, 'CN');
+    await mainland.route('https://mirror.qlzx.qzz.io/**', async route => {
+      images.push(route.request().url());
+      await route.fulfill({ contentType: 'image/png', body: readFileSync('public/images/sakura-classroom.png') });
+    });
+    for (const path of ['/', '/codeget', '/admin']) {
+      const target = await open(mainland, path);
+      await background(target, true);
+      await target.waitForFunction(() => !document.documentElement.classList.contains('is-loading'));
+      assert.deepEqual(await target.evaluate(() => window.backgroundPolicyErrors), [], 'The mirror must be allowed by the page security policy');
+    }
+    assert.equal(images.length, 3, 'All three pages must load their background through the mirror');
+    assert.ok(images.every(url => url === `https://mirror.qlzx.qzz.io/${base}/images/sakura-classroom.png`));
+  } finally { await mainland.close(); }
   assert.deepEqual(errors, []);
-  console.log('主题验收通过：原图背景、主题记忆与跨页同步、存储回退、320–1365px 排版；首页提示延迟、弹簧/淡入淡出、自动/手动关闭、悬停/焦点暂停、切换入口与减少动态效果。仅本地检查，不写业务数据。');
+  console.log('主题验收通过：同源/大陆镜像背景与安全策略、主题同步与存储回退、320–1365px 排版、首页提示动效与交互。镜像响应仅在本地模拟，不连接生产或写入业务数据。');
 } finally { await context.close(); await browser.close(); }

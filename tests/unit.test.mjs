@@ -4,6 +4,46 @@ import { encodeCSV, parseCSV } from '../src/csv.js';
 import { displayName, str } from '../src/lib.js';
 import { adminAuth, checkOrigin, decryptCode, digest, encryptCode, equal, keyedHash, passwordHash, passwordMatches, rateLimit, token } from '../src/security.js';
 import { heartRows } from '../public/heart.js';
+import { readFileSync } from 'node:fs';
+import worker from '../src/index.js';
+
+test('Only trusted mainland China geolocation prefixes the background URL, without cache reuse', async () => {
+  const css = readFileSync('public/theme.css', 'utf8');
+  for (const country of ['CN', 'HK', 'MO', 'TW', 'US', undefined]) {
+    const request = new Request('https://school.example/theme.css', { headers: {
+      'CF-IPCountry': 'CN', 'If-None-Match': 'old-theme', 'If-Modified-Since': 'Sun, 15 Nov 2026 00:00:00 GMT', Range: 'bytes=0-9', 'If-Range': 'old-theme'
+    } });
+    if (country) request.cf = { country };
+    const response = await worker.fetch(request, { ASSETS: { fetch: async assetRequest => {
+      for (const name of ['If-None-Match', 'If-Modified-Since', 'Range', 'If-Range']) assert.equal(assetRequest.headers.get(name), null);
+      assert.equal(assetRequest.headers.get('Accept-Encoding'), 'identity');
+      return new Response(css, { headers: { 'Content-Type': 'text/css', 'Cache-Control': 'public, max-age=3600', ETag: 'old-theme', 'Last-Modified': 'Sun, 15 Nov 2026 00:00:00 GMT', 'Content-Length': String(Buffer.byteLength(css)) } });
+    } } });
+    assert.equal(response.status, 200);
+    assert.equal(await response.text(), country === 'CN' ? css.replace("url('/images/sakura-classroom.png')", "url('https://mirror.qlzx.qzz.io/https://school.example/images/sakura-classroom.png')") : css);
+    assert.equal(response.headers.get('Cache-Control'), 'no-store');
+    for (const name of ['ETag', 'Last-Modified', 'Content-Length']) assert.equal(response.headers.get(name), null);
+    assert.match(response.headers.get('Content-Type'), /text\/css/);
+    const csp = response.headers.get('Content-Security-Policy');
+    assert.match(csp, /img-src 'self' data: https:\/\/mirror\.qlzx\.qzz\.io;/);
+    assert.match(csp, /script-src 'self'; style-src 'self';/);
+    assert.match(csp, /connect-src 'self';/);
+  }
+});
+
+test('Regional stylesheet preserves HEAD, errors, raw artwork and unsupported method handling', async () => {
+  for (const [path, method, status, body] of [
+    ['/theme.css', 'HEAD', 200, null], ['/theme.css', 'GET', 404, 'Not found'],
+    ['/images/sakura-classroom.png', 'GET', 200, readFileSync('public/images/sakura-classroom.png')]
+  ]) {
+    const request = new Request('https://school.example' + path, { method });
+    request.cf = { country: 'CN' };
+    const response = await worker.fetch(request, { ASSETS: { fetch: async () => new Response(body, { status }) } });
+    assert.equal(response.status, status);
+    assert.deepEqual(Buffer.from(await response.arrayBuffer()), Buffer.from(body || ''));
+  }
+  assert.equal((await worker.fetch(new Request('https://school.example/theme.css', { method: 'POST' }), {})).status, 405);
+});
 
 test('CSV supports BOM, escaped quotes, commas, CRLF and quoted multiline names', () => {
   const data = parseCSV('\ufeffreal_name,class_name,student_code,teacher_name\r\n"李""明","三年级,一班",A8vZ7nQp9t,陈老师\r\n');
