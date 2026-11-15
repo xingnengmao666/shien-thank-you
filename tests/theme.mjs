@@ -10,6 +10,7 @@ const errors = [];
 mkdirSync('test-results', { recursive: true });
 async function open(context, path = '/') {
   const page = await context.newPage();
+  await page.clock.install();
   page.on('pageerror', error => errors.push(error.message));
   assert.equal((await page.goto(base + path)).status(), 200);
   await page.locator('[data-theme-select]:visible').waitFor();
@@ -23,8 +24,40 @@ async function background(page) {
   assert.match(await page.locator('body').evaluate(el => getComputedStyle(el, '::before').backgroundImage), /\/images\/sakura-classroom\.png/);
   assert.equal(await page.locator('body').evaluate(el => getComputedStyle(el, '::before').pointerEvents), 'none');
 }
+async function hint(page, animated = true) {
+  await page.clock.fastForward(800);
+  await page.locator('#theme-hint').waitFor();
+  const animations = await page.locator('#theme-hint').evaluate(el => el.getAnimations().map(animation => ({
+    name: animation.animationName, frames: animation.effect.getKeyframes(), duration: animation.effect.getTiming().duration
+  })));
+  if (animated) {
+    assert.ok(animations.some(animation => animation.name === 'theme-hint-enter' && animation.frames.some(frame => frame.transform === 'translateY(4px) scale(1.025)')), 'The hint must spring past its resting position');
+    assert.ok(animations.some(animation => animation.frames[0].opacity === '0' && animation.frames.at(-1).opacity === '1'), 'The hint must fade in');
+  } else assert.deepEqual(animations, [], 'Reduced motion must show the hint without animation');
+  await page.locator('#theme-hint').evaluate(el => el.getAnimations().forEach(animation => animation.finish()));
+  const box = await page.locator('#theme-hint').boundingBox(), viewport = page.viewportSize();
+  assert.ok(Math.abs(box.x + box.width / 2 - viewport.width / 2) < 1, 'The hint must be horizontally centered');
+  assert.ok(box.y >= 80 && box.y < viewport.height / 4 && box.width <= 360 && box.height <= 160, 'Keep the hint small and near the top');
+}
 try {
   const page = await open(context);
+  assert.ok(await page.locator('#theme-hint').isHidden(), 'Do not show the hint immediately');
+  await hint(page);
+  assert.equal(await page.locator('#theme-hint').evaluate(el => el.contains(document.activeElement)), false, 'The hint must not steal focus');
+  await page.screenshot({ path: 'test-results/local-theme-hint-desktop.png' });
+  await page.locator('.theme-hint-close').hover();
+  await page.clock.fastForward(9000);
+  assert.ok(await page.locator('#theme-hint').isVisible(), 'Hovering pauses automatic dismissal');
+  await page.locator('.theme-hint-action').focus();
+  await page.mouse.move(0, 0);
+  await page.clock.fastForward(9000);
+  assert.ok(await page.locator('#theme-hint').isVisible(), 'Keyboard focus pauses automatic dismissal');
+  await page.locator('.theme-hint-action').click();
+  await page.waitForFunction(() => document.activeElement.matches('[data-theme-select]'));
+  const fadeOut = await page.locator('#theme-hint').evaluate(el => el.getAnimations().some(animation => animation.effect.getKeyframes().at(-1).opacity === '0'));
+  assert.ok(fadeOut, 'Dismissal must fade out');
+  await page.clock.fastForward(200);
+  await page.locator('#theme-hint').waitFor({ state: 'hidden' });
   await theme(page, 'sakura');
   await background(page);
   const artwork = await context.request.get(base + '/images/sakura-classroom.png');
@@ -42,14 +75,19 @@ try {
   await theme(page, 'campus');
   await page.reload();
   await theme(page, 'campus');
+  await hint(page);
+  await page.clock.fastForward(8200);
+  await page.locator('#theme-hint').waitFor({ state: 'hidden' });
   assert.equal(await page.locator('body').evaluate(el => getComputedStyle(el).getPropertyValue('--school-original').trim()), '#67d027');
   const codeget = await open(context, '/codeget');
+  assert.equal(await codeget.locator('#theme-hint').count(), 0);
   await theme(codeget, 'campus');
   await codeget.locator('[data-theme-select]').selectOption('sakura');
   await theme(codeget, 'sakura');
   await theme(page, 'sakura');
   await background(codeget);
   const admin = await open(context, '/admin');
+  assert.equal(await admin.locator('#theme-hint').count(), 0);
   await theme(admin, 'sakura');
   await background(admin);
   await admin.locator('[data-theme-select]:visible').selectOption('campus');
@@ -78,18 +116,34 @@ try {
   await page.evaluate(() => localStorage.setItem('shien-theme', 'invalid'));
   await page.reload();
   await theme(page, 'sakura');
+  await page.evaluate(() => scrollTo({ top: 0, behavior: 'instant' }));
+  await hint(page);
+  await page.screenshot({ path: 'test-results/local-theme-hint-mobile.png' });
+  for (const width of [320, 390, 768, 1365]) {
+    await page.setViewportSize({ width, height: 844 });
+    const box = await page.locator('#theme-hint').boundingBox();
+    assert.ok(box.x >= 0 && box.x + box.width <= width, `Theme hint overflow at ${width}px`);
+    const header = await page.locator('.site-header').boundingBox();
+    assert.ok(box.y >= header.y + header.height, `Theme hint must leave navigation available at ${width}px`);
+  }
+  await page.locator('.theme-hint-close').click();
+  await page.clock.fastForward(200);
+  await page.locator('#theme-hint').waitFor({ state: 'hidden' });
+  assert.ok(await page.locator('[data-theme-select]').evaluate(el => el === document.activeElement), 'Closing a focused hint returns focus to the theme picker');
 
   const unavailable = await browser.newContext({ reducedMotion: 'reduce' });
   try {
     await unavailable.addInitScript(() => Object.defineProperty(window, 'localStorage', { get() { throw new DOMException('Storage disabled', 'SecurityError'); } }));
     const quiet = await open(unavailable);
     await theme(quiet, 'sakura');
+    await hint(quiet, false);
     await quiet.locator('[data-theme-select]').selectOption('campus');
     await theme(quiet, 'campus');
+    assert.ok(await quiet.locator('#theme-hint').isHidden(), 'Switching themes dismisses the hint');
     await quiet.locator('[data-theme-select]').selectOption('sakura');
     await theme(quiet, 'sakura');
     assert.equal(await quiet.locator('.heart-outline path').evaluate(el => getComputedStyle(el).animationName), 'none');
   } finally { await unavailable.close(); }
   assert.deepEqual(errors, []);
-  console.log('主题验收通过：原图同源背景、默认水彩配色、旧主题可选、刷新与跨页/标签同步、存储禁用回退、320–1365px 无溢出、弹窗交互与减少动态效果。仅本地检查，不写业务数据。');
+  console.log('主题验收通过：原图背景、主题记忆与跨页同步、存储回退、320–1365px 排版；首页提示延迟、弹簧/淡入淡出、自动/手动关闭、悬停/焦点暂停、切换入口与减少动态效果。仅本地检查，不写业务数据。');
 } finally { await context.close(); await browser.close(); }
