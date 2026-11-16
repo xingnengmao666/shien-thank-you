@@ -11,8 +11,18 @@ export function heartRows(count, columns) {
     if (capacities.reduce((sum, n) => sum + n, 0) >= count) break;
   }
   let excess = capacities.reduce((sum, n) => sum + n, 0) - count;
-  for (let r = 1; excess > 0; r = r % (capacities.length - 2) + 1) {
-    if (capacities[r] > 1) { capacities[r]--; excess--; }
+  while (capacities.length > 3 && excess >= capacities.at(-2)) {
+    excess -= capacities.splice(capacities.length - 2, 1)[0];
+  }
+  // Keep the second and third rows wide; trim the taper first.
+  for (const start of [3, 1]) {
+    while (excess > 0) {
+      let reduced = false;
+      for (let r = capacities.length - 2; r >= start && excess > 0; r--) {
+        if (capacities[r] > 1) { capacities[r]--; excess--; reduced = true; }
+      }
+      if (!reduced) break;
+    }
   }
   let index = 0;
   return capacities.map(n => Array.from({ length: n }, () => index++));

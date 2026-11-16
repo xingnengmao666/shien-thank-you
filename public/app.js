@@ -11,13 +11,18 @@ function sizeHeart() {
   outline.setAttribute('viewBox', '0 0 800 650'); heartPath.setAttribute('d', emptyPath);
   outline.setAttribute('preserveAspectRatio', stage.classList.contains('has-notes') ? 'none' : 'xMidYMid meet');
   if (!stage.classList.contains('has-notes')) return;
-  const body = $('#notes').scrollHeight, width = stage.clientWidth;
+  const rows = [...$('#notes').children], width = stage.clientWidth;
+  const body = rows.reduce((height, row) => height + row.offsetHeight, 0);
   const compact = stage.classList.contains('compact-heart');
-  const fraction = noteButtons.length === 1 ? .5 : compact ? .8 : .68, start = noteButtons.length === 1 ? .28 : compact ? .1 : .12;
-  const height = Math.max(width / 1.3, body / fraction);
-  const top = height * start + (height * fraction - body) / 2;
+  const gap = parseFloat(stage.style.getPropertyValue('--note-gap'));
+  const noteWidth = parseFloat(stage.style.getPropertyValue('--note-width'));
+  const fraction = noteButtons.length === 1 ? .5 : compact ? .82 - noteWidth / width : .68, start = noteButtons.length === 1 ? .28 : compact ? .1 : .12;
+  const height = Math.max(width * 650 / 800, (body + gap * (rows.length - 1)) / fraction);
+  const rowGap = rows.length > 1 ? (height * fraction - body) / (rows.length - 1) : 0;
+  const top = height * start + (rows.length === 1 ? (height * fraction - body) / 2 : 0);
+  stage.style.setProperty('--row-gap', `${rowGap}px`);
   stage.style.setProperty('--heart-top-space', `${top}px`);
-  stage.style.setProperty('--heart-bottom-space', `${height - top - body}px`);
+  stage.style.setProperty('--heart-bottom-space', `${height - top - body - rowGap * (rows.length - 1)}px`);
   dispatchEvent(new Event('scroll'));
 }
 new ResizeObserver(sizeHeart).observe($('#notes'));
@@ -47,20 +52,22 @@ function readNote(message, campus) {
 function arrangeNotes() {
   const stage = $('#heart-stage'), wall = $('#notes');
   const available = $('#heart-wall').clientWidth;
-  const compact = noteButtons.length >= 12 && available >= 640;
+  const compact = noteButtons.length >= 5 && available >= 640;
   stage.classList.toggle('has-notes', noteButtons.length > 0);
   stage.classList.toggle('compact-heart', compact);
   if (!noteButtons.length) { stage.style.removeProperty('--wall-width'); stage.style.removeProperty('--note-width'); wall.replaceChildren(); sizeHeart(); return; }
   const oldPositions = new Map(noteButtons.filter(note => note.isConnected && !note.classList.contains('note-enter')).map(note => [note, note.getBoundingClientRect()]));
   const focused = document.activeElement;
-  const gap = compact ? 14 : 24;
-  const columns = Math.max(1, Math.min(8, Math.floor((available * .8 + gap) / ((compact ? 100 : 200) + gap)), Math.ceil(Math.sqrt(noteButtons.length) * (compact ? 1.6 : 1))));
-  const width = Math.min(available, noteButtons.length === 1 ? 520 : (columns * (compact ? 130 : 210) + (columns - 1) * gap) / .8);
+  const gap = compact ? 12 : 24;
+  const columns = Math.max(1, Math.min(8, Math.floor((available * .72 + gap) / ((compact ? 90 : 200) + gap)), Math.ceil(Math.sqrt(noteButtons.length) * (compact ? 1.35 : 1))));
+  const width = Math.min(available, noteButtons.length === 1 ? 520 : (columns * (compact ? 130 : 210) + (columns - 1) * gap) / .72);
   stage.style.setProperty('--wall-width', `${width}px`);
   stage.style.setProperty('--note-gap', `${gap}px`);
-  stage.style.setProperty('--note-width', `${Math.min(220, (width * .8 - (columns - 1) * gap) / columns)}px`);
+  stage.style.setProperty('--note-width', `${Math.min(220, (width * .72 - (columns - 1) * gap) / columns)}px`);
   const rows = [...wall.children];
-  heartRows(noteButtons.length, columns).forEach((indices, r) => {
+  const layout = heartRows(noteButtons.length, columns);
+  stage.style.setProperty('--shoulder-width', layout.length <= 4 ? '80%' : '90%');
+  layout.forEach((indices, r) => {
     const row = rows[r] || document.createElement('div'); row.className = 'note-row';
     let anchor = row.firstElementChild;
     indices.forEach((index, position) => {

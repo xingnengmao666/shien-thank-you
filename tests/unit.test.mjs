@@ -99,7 +99,9 @@ test('Heart rows preserve every message in stable order with balanced lobes and 
     assert.ok(rows.every(row => row.length >= 1 && row.length <= columns));
     if (count > 2 && columns > 1) { assert.equal(rows[0].length % 2, 0); assert.equal(rows.at(-1).length, 1); }
   }
-  assert.deepEqual(heartRows(30, 8).map(row => row.length), [4, 7, 7, 7, 4, 1]);
+  assert.deepEqual(heartRows(11, 4).map(row => row.length), [2, 4, 4, 1]);
+  assert.deepEqual(heartRows(24, 8).map(row => row.length), [4, 8, 8, 3, 1]);
+  assert.deepEqual(heartRows(30, 8).map(row => row.length), [4, 8, 8, 6, 3, 1]);
 });
 test('Names are masked by default; input limits count Unicode codepoints', () => {
   assert.equal(displayName('张小明','masked'),'张同学'); assert.equal(displayName('张小明','anonymous'),'一位同学'); assert.equal(displayName('张小明','full'),'张小明');
