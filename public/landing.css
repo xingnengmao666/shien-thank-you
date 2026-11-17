@@ -138,31 +138,28 @@
 @media (max-width: 700px) {
   .public-page .site-header { height: 64px; }
   .public-page .brand { font-size: 16px; }
-  .public-page .wall-section { min-height: calc(100svh - 64px); padding-top: 28px; }
+  .public-page .wall-section { display: block; min-width: 0; min-height: calc(100svh - 64px); padding-top: 28px; }
   .public-page .wall-heading h1 { font-size: clamp(25px, 6.7vw, 32px); letter-spacing: 1px; }
   .public-page .wall-heading > p:last-child { font-size: 11px; margin-top: 10px; }
   .public-page .heart-stage { width: 100%; margin: 18px auto 0; }
   .public-page .heart-note { padding: 17px 14px 10px; }
   .public-page .note-preview { font-size: 14px; }
-  .public-page .heart-stage.mobile-heart { width: 100%; padding: 0; aspect-ratio: auto; margin-block: 22px 18px; }
+  .public-page .heart-stage.mobile-heart { width: 100%; max-width: 100%; min-width: 0; padding: 0; aspect-ratio: auto; margin-block: 22px 18px; }
   .mobile-heart > .heart-outline { display: none; }
   .mobile-heart .school-legend { position: relative; inset: auto; margin-bottom: 14px; }
   .mobile-heart-hint { text-align: center; font-size: 12px; color: var(--muted); margin-bottom: 8px; }
-  .public-page .mobile-heart #notes { display: flex; align-items: stretch; gap: 16px; padding: 0; overflow-x: auto; overscroll-behavior-x: contain; scroll-snap-type: x mandatory; scrollbar-width: none; }
-  .mobile-heart #notes::-webkit-scrollbar { display: none; }
-  .mobile-heart-page { position: relative; flex: 0 0 100%; min-width: 0; display: grid; grid-template-rows: 126px 1fr; justify-items: center; padding: 0 10px 14px; scroll-snap-align: start; scroll-snap-stop: always; }
-  .public-page .mobile-heart .mobile-heart-page > .heart-outline { position: relative; inset: auto; width: 144px; height: 117px; max-width: 100%; overflow: visible; }
-  .public-page .mobile-heart .heart-note { flex: none; width: 100%; min-width: 0; min-height: 0; padding: 23px 20px 16px; transform: none; }
-  .public-page .mobile-heart .note-preview { display: -webkit-box; -webkit-line-clamp: 5; height: 9em; overflow: hidden; font-family: "Microsoft YaHei", "PingFang SC", sans-serif; font-size: 16px; line-height: 1.8; }
-  .public-page .mobile-heart .note-author { font-size: 13px; line-height: 1.7; margin-top: 12px; }
-  .public-page .mobile-heart .note-actions { display: block; margin-top: 14px; }
+  .public-page .mobile-heart #notes { display: grid; grid-template-columns: minmax(0, 1fr); gap: 22px; width: 100%; max-width: 100%; min-width: 0; padding: 0; }
+  .mobile-heart-page { position: relative; width: 100%; max-width: 360px; min-width: 0; display: grid; grid-template-columns: minmax(0, 1fr); gap: 6px; justify-items: center; justify-self: center; padding: 0 4px; }
+  .public-page .mobile-heart .mobile-heart-page > .heart-outline { position: relative; inset: auto; width: 96px; height: 78px; max-width: 100%; overflow: visible; }
+  .public-page .mobile-heart .heart-note { flex: none; width: 100%; max-width: 100%; min-width: 0; min-height: 0; padding: 17px 16px 12px; transform: none; }
+  .public-page .mobile-heart .note-preview { display: -webkit-box; -webkit-line-clamp: 4; height: auto; max-height: 7.2em; overflow: hidden; font-family: "Microsoft YaHei", "PingFang SC", sans-serif; font-size: 16px; line-height: 1.8; }
+  .public-page .mobile-heart .note-author { font-size: 13px; line-height: 1.7; margin-top: 8px; }
+  .public-page .mobile-heart .note-actions { display: block; margin-top: 10px; }
   .mobile-heart .note-toggle { display: none; }
   .public-page .mobile-heart .note-read { width: 100%; min-height: 44px; padding: 10px 12px; opacity: 1; font-size: 14px; font-weight: 600; border-top: 1px solid var(--line); }
-  .mobile-heart-nav { display: grid; grid-template-columns: 1fr auto 1fr; gap: 12px; align-items: center; padding-inline: 10px; margin-top: 2px; font-size: 13px; }
-  .mobile-heart-nav button { min-height: 44px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 6px; background: var(--white, var(--paper)); color: var(--ink); font-size: 13px; }
-  .mobile-heart-nav button:first-child { justify-self: start; }
-  .mobile-heart-nav button:last-child { justify-self: end; }
-  #heart-position { white-space: nowrap; font-variant-numeric: tabular-nums; color: var(--muted); }
+  .mobile-heart-nav { display: flex; flex-direction: column; gap: 8px; width: 100%; max-width: 360px; min-width: 0; margin: 22px auto 0; padding-inline: 4px; font-size: 13px; }
+  .mobile-heart-nav button { width: 100%; min-height: 44px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 6px; background: var(--white, var(--paper)); color: var(--ink); font-size: 13px; }
+  #heart-position { text-align: center; font-variant-numeric: tabular-nums; color: var(--muted); }
   .public-page #read-dialog { width: 100%; max-width: none; max-height: 88dvh; margin: auto 0 0; padding: 32px 24px calc(24px + env(safe-area-inset-bottom)); border-radius: 18px 18px 0 0; overscroll-behavior: contain; }
   .public-page #read-dialog .dialog-close { position: sticky; top: 0; right: auto; float: right; z-index: 2; margin: -16px -8px 0 8px; min-width: 44px; min-height: 44px; padding: 0; background: inherit; }
   .public-page #read-content { margin-block: 24px; font-family: "Microsoft YaHei", "PingFang SC", sans-serif; font-size: 17px; line-height: 1.85; }

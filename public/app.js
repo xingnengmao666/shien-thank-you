@@ -49,36 +49,31 @@ function readNote(message, campus) {
   $('#read-dialog').dataset.campus = campus;
   $('#read-content').textContent = message.content; $('#read-name').textContent = `—— ${message.display_name}`; $('#read-date').textContent = dateText(message.created_at); $('#read-dialog').showModal();
 }
-function updateMobilePosition() {
+function updateMobileGroup() {
   const wall = $('#notes');
   if (!$('#heart-stage').classList.contains('mobile-heart') || !noteButtons.length) return;
-  const step = wall.firstElementChild.offsetWidth + parseFloat(getComputedStyle(wall).columnGap);
-  const next = Math.max(0, Math.min(noteButtons.length - 1, Math.round(wall.scrollLeft / step)));
-  if (next !== mobileIndex) {
-    if (wall.children[mobileIndex]) wall.children[mobileIndex].inert = true;
-    mobileIndex = next; wall.children[mobileIndex].inert = false;
-  }
-  const position = `${mobileIndex + 1} / ${noteButtons.length}`;
+  const groups = Math.ceil(noteButtons.length / 3);
+  mobileIndex = Math.max(0, Math.min(groups - 1, mobileIndex));
+  [...wall.children].forEach((page, index) => { page.hidden = Math.floor(index / 3) !== mobileIndex; });
+  const position = `第 ${mobileIndex + 1} 组 / 共 ${groups} 组`;
   if ($('#heart-position').textContent !== position) $('#heart-position').textContent = position;
   $('#heart-prev').disabled = mobileIndex === 0;
-  $('#heart-next').disabled = mobileIndex === noteButtons.length - 1;
+  $('#heart-next').disabled = mobileIndex === groups - 1;
 }
-function turnMobilePage(index, behavior = 'smooth') {
-  const wall = $('#notes');
-  const page = wall.children[Math.max(0, Math.min(noteButtons.length - 1, index))];
-  if (page) wall.scrollTo({ left: page.offsetLeft - wall.firstElementChild.offsetLeft, behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : behavior });
+function turnMobilePage(index) {
+  mobileIndex = index; updateMobileGroup();
+  const page = $('#notes').children[mobileIndex * 3];
+  if (page) {
+    page.focus({ preventScroll: true });
+    page.scrollIntoView({ block: 'start', behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth' });
+  }
 }
 $('#heart-prev').addEventListener('click', () => turnMobilePage(mobileIndex - 1));
 $('#heart-next').addEventListener('click', () => turnMobilePage(mobileIndex + 1));
-$('#notes').addEventListener('scroll', updateMobilePosition, { passive: true });
-$('#notes').addEventListener('keydown', event => {
-  if (event.target !== $('#notes') || !$('#heart-stage').classList.contains('mobile-heart') || !['ArrowLeft', 'ArrowRight'].includes(event.key)) return;
-  event.preventDefault(); turnMobilePage(mobileIndex + (event.key === 'ArrowLeft' ? -1 : 1));
-});
 function arrangeMobileNotes(wall) {
-  const current = wall.querySelector('.mobile-heart-page:not([inert]) .heart-note');
+  const current = wall.querySelector('.mobile-heart-page:not([hidden]) .heart-note');
   const currentIndex = noteButtons.indexOf(current);
-  mobileIndex = currentIndex >= 0 ? currentIndex : Math.min(mobileIndex, noteButtons.length - 1);
+  if (currentIndex >= 0) mobileIndex = Math.floor(currentIndex / 3);
   let anchor = wall.firstElementChild;
   noteButtons.forEach((note, index) => {
     let page = note.closest('.mobile-heart-page');
@@ -93,7 +88,7 @@ function arrangeMobileNotes(wall) {
       page.append(heart);
     }
     page.setAttribute('role', 'group'); page.setAttribute('aria-label', `第 ${index + 1} 份祝福，共 ${noteButtons.length} 份`);
-    page.inert = index !== mobileIndex;
+    page.inert = false; page.setAttribute('tabindex', '-1');
     note.classList.remove('note-lobe-start'); note.style.setProperty('--rotation', '0deg');
     note.dataset.campus = index % 2 ? 'new' : 'original';
     note.querySelector('.note-read').textContent = '阅读全文';
@@ -103,10 +98,10 @@ function arrangeMobileNotes(wall) {
     anchor = page.nextElementSibling;
   });
   for (const child of [...wall.children]) if (!child.classList.contains('mobile-heart-page') || !child.querySelector('.heart-note')) child.remove();
-  wall.setAttribute('tabindex', '0');
+  wall.removeAttribute('tabindex');
   if (noteButtons.length > 1) wall.setAttribute('aria-describedby', 'mobile-heart-hint');
   else wall.removeAttribute('aria-describedby');
-  turnMobilePage(mobileIndex, 'instant'); updateMobilePosition();
+  updateMobileGroup();
   dispatchEvent(new Event('scroll'));
 }
 function arrangeNotes() {
@@ -119,7 +114,7 @@ function arrangeNotes() {
   stage.classList.toggle('mobile-heart', mobile);
   $('#wall-title').textContent = mobile ? '把心意，一页页珍藏' : '把心意，拼成一颗心';
   $('#heart-wall .wall-heading > p:last-child').textContent = mobile ? '您奔赴新的校园，这些心意一直都在。' : '您奔赴新的校园，我们把感谢留成一颗心。';
-  $('#mobile-heart-nav').hidden = !mobile;
+  $('#mobile-heart-nav').hidden = !mobile || noteButtons.length <= 3;
   $('#mobile-heart-hint').hidden = !mobile || noteButtons.length === 1;
   if (!mobile) { wall.removeAttribute('tabindex'); wall.removeAttribute('aria-describedby'); }
   if (!noteButtons.length) { stage.style.removeProperty('--wall-width'); stage.style.removeProperty('--note-width'); wall.replaceChildren(); sizeHeart(); return; }
