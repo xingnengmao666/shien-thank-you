@@ -90,12 +90,34 @@ try {
     await page.setViewportSize({ width, height: 844 });
     await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
     await page.evaluate(async () => { await Promise.all([...document.querySelectorAll('.heart-note')].flatMap(el => el.getAnimations()).map(a => a.finished.catch(() => {}))); });
-    await complete();
-    if (width <= 390) assert.ok(await page.locator('.heart-note').evaluateAll(notes => notes.every(note => note.style.getPropertyValue('--rotation') === '0deg')), 'Single-column notes must stay upright inside the heart');
-    if (width === 390) await page.screenshot({ path: '.local/notes/expanded-mobile.png', fullPage: true });
+    if (width > 700) { await complete(); continue; }
+    assert.equal(await page.locator('.mobile-heart-page').count(), contents.length);
+    assert.deepEqual(await page.locator('.heart-note').evaluateAll(notes => notes.map(note => note.dataset.messageId)), order);
+    assert.ok((await page.locator('#heart-stage').boundingBox()).height < 650, 'Mobile blessings grew into a long wall');
+    assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), 'The mobile carousel overflowed the document');
+    assert.ok(await page.locator('.mobile-heart-page .heart-outline').evaluateAll(hearts => hearts.every(heart => {
+      const r = heart.getBoundingClientRect(); return heart.getAttribute('preserveAspectRatio') === 'xMidYMid meet' && Math.abs(r.width / r.height - 800 / 650) < .02;
+    })), 'Mobile hearts lost their original proportions');
+    const gradientIds = await page.locator('.heart-outline [id]').evaluateAll(gradients => gradients.map(gradient => gradient.id));
+    assert.equal(new Set(gradientIds).size, gradientIds.length, 'Mobile hearts share conflicting gradient IDs');
+    assert.ok(await page.locator('.note-preview').evaluateAll(notes => notes.every(note => parseFloat(getComputedStyle(note).fontSize) >= 16)), 'Mobile previews are too small');
+    await page.locator('#notes').focus(); await page.keyboard.press('ArrowRight');
+    await page.waitForFunction(() => document.querySelector('#heart-position').textContent === '2 / 30');
+    await page.locator('.mobile-heart-page:not([inert]) .note-read').click();
+    assert.equal(await page.locator('#read-content').textContent(), contents[1]);
+    assert.ok(await page.locator('#read-content').evaluate(el => parseFloat(getComputedStyle(el).fontSize) >= 17));
+    assert.ok(await page.locator('#read-dialog').evaluate(el => el.scrollHeight > el.clientHeight), 'Long mobile blessings are not scrollable');
+    await page.locator('#read-dialog .dialog-close').click();
+    await page.locator('#heart-next').click();
+    await page.waitForFunction(() => document.querySelector('#heart-position').textContent === '3 / 30');
+    await page.locator('#heart-prev').click();
+    await page.waitForFunction(() => document.querySelector('#heart-position').textContent === '2 / 30');
+    if (width === 390) await page.screenshot({ path: '.local/notes/mobile-book.png', fullPage: true });
+    await page.locator('#heart-prev').click();
+    await page.waitForFunction(() => document.querySelector('#heart-position').textContent === '1 / 30');
   }
   assert.deepEqual(errors, []);
-  console.log('便签验收通过：紧凑预览、键盘展开/收起、1000 字与多行全文可读、署名完整、无重叠、原有曲线不变、爱心随数量与展开同步扩展、刷新顺序稳定、320/390/768px 可读。真实本地 D1 测试数据已清理。');
+  console.log('便签验收通过：桌面紧凑预览与全文展开、手机原比例小爱心与横向翻阅、16px 预览与17px 全文、键盘与翻页按钮、长文滚动阅读、署名完整、刷新顺序稳定、切回桌面保留展开状态。真实本地 D1 测试数据已清理。');
 } finally {
   try {
     if (group && headers) {

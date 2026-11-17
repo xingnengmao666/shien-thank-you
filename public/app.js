@@ -3,14 +3,14 @@ import { conceal, reveal, sendPaper, setBusy, startLoading } from './ui.js';
 import './landing.js';
 const $ = s => document.querySelector(s);
 let credential = null, classes = [], syncInProgress = false, lastSignature = '';
-let noteButtons = [], layoutFrame = 0;
+let noteButtons = [], layoutFrame = 0, mobileIndex = 0;
 const outline = $('#heart-stage .heart-outline'), heartPath = outline.querySelector('path');
 const emptyPath = heartPath.getAttribute('d');
 function sizeHeart() {
   const stage = $('#heart-stage');
   outline.setAttribute('viewBox', '0 0 800 650'); heartPath.setAttribute('d', emptyPath);
-  outline.setAttribute('preserveAspectRatio', stage.classList.contains('has-notes') ? 'none' : 'xMidYMid meet');
-  if (!stage.classList.contains('has-notes')) return;
+  outline.setAttribute('preserveAspectRatio', stage.classList.contains('has-notes') && !stage.classList.contains('mobile-heart') ? 'none' : 'xMidYMid meet');
+  if (!stage.classList.contains('has-notes') || stage.classList.contains('mobile-heart')) return;
   const rows = [...$('#notes').children], width = stage.clientWidth;
   const body = rows.reduce((height, row) => height + row.offsetHeight, 0);
   const compact = stage.classList.contains('compact-heart');
@@ -49,22 +49,94 @@ function readNote(message, campus) {
   $('#read-dialog').dataset.campus = campus;
   $('#read-content').textContent = message.content; $('#read-name').textContent = `—— ${message.display_name}`; $('#read-date').textContent = dateText(message.created_at); $('#read-dialog').showModal();
 }
+function updateMobilePosition() {
+  const wall = $('#notes');
+  if (!$('#heart-stage').classList.contains('mobile-heart') || !noteButtons.length) return;
+  const step = wall.firstElementChild.offsetWidth + parseFloat(getComputedStyle(wall).columnGap);
+  const next = Math.max(0, Math.min(noteButtons.length - 1, Math.round(wall.scrollLeft / step)));
+  if (next !== mobileIndex) {
+    if (wall.children[mobileIndex]) wall.children[mobileIndex].inert = true;
+    mobileIndex = next; wall.children[mobileIndex].inert = false;
+  }
+  const position = `${mobileIndex + 1} / ${noteButtons.length}`;
+  if ($('#heart-position').textContent !== position) $('#heart-position').textContent = position;
+  $('#heart-prev').disabled = mobileIndex === 0;
+  $('#heart-next').disabled = mobileIndex === noteButtons.length - 1;
+}
+function turnMobilePage(index, behavior = 'smooth') {
+  const wall = $('#notes');
+  const page = wall.children[Math.max(0, Math.min(noteButtons.length - 1, index))];
+  if (page) wall.scrollTo({ left: page.offsetLeft - wall.firstElementChild.offsetLeft, behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : behavior });
+}
+$('#heart-prev').addEventListener('click', () => turnMobilePage(mobileIndex - 1));
+$('#heart-next').addEventListener('click', () => turnMobilePage(mobileIndex + 1));
+$('#notes').addEventListener('scroll', updateMobilePosition, { passive: true });
+$('#notes').addEventListener('keydown', event => {
+  if (event.target !== $('#notes') || !$('#heart-stage').classList.contains('mobile-heart') || !['ArrowLeft', 'ArrowRight'].includes(event.key)) return;
+  event.preventDefault(); turnMobilePage(mobileIndex + (event.key === 'ArrowLeft' ? -1 : 1));
+});
+function arrangeMobileNotes(wall) {
+  const current = wall.querySelector('.mobile-heart-page:not([inert]) .heart-note');
+  const currentIndex = noteButtons.indexOf(current);
+  mobileIndex = currentIndex >= 0 ? currentIndex : Math.min(mobileIndex, noteButtons.length - 1);
+  let anchor = wall.firstElementChild;
+  noteButtons.forEach((note, index) => {
+    let page = note.closest('.mobile-heart-page');
+    if (!page) {
+      page = document.createElement('div'); page.className = 'mobile-heart-page';
+      const heart = outline.cloneNode(true);
+      heart.setAttribute('preserveAspectRatio', 'xMidYMid meet');
+      // Each heart needs its own gradient IDs when several share the same document.
+      for (const gradient of heart.querySelectorAll('[id]')) gradient.id += `-${note.dataset.messageId}`;
+      heart.querySelector('path').setAttribute('fill', `url(#heart-paper-${note.dataset.messageId})`);
+      heart.querySelector('path').setAttribute('stroke', `url(#heart-thread-${note.dataset.messageId})`);
+      page.append(heart);
+    }
+    page.setAttribute('role', 'group'); page.setAttribute('aria-label', `第 ${index + 1} 份祝福，共 ${noteButtons.length} 份`);
+    page.inert = index !== mobileIndex;
+    note.classList.remove('note-lobe-start'); note.style.setProperty('--rotation', '0deg');
+    note.dataset.campus = index % 2 ? 'new' : 'original';
+    note.querySelector('.note-read').textContent = '阅读全文';
+    note.querySelector('.note-preview').getAnimations().forEach(animation => animation.cancel());
+    if (note.parentElement !== page) page.append(note);
+    if (page !== anchor) wall.insertBefore(page, anchor);
+    anchor = page.nextElementSibling;
+  });
+  for (const child of [...wall.children]) if (!child.classList.contains('mobile-heart-page') || !child.querySelector('.heart-note')) child.remove();
+  wall.setAttribute('tabindex', '0');
+  if (noteButtons.length > 1) wall.setAttribute('aria-describedby', 'mobile-heart-hint');
+  else wall.removeAttribute('aria-describedby');
+  turnMobilePage(mobileIndex, 'instant'); updateMobilePosition();
+  dispatchEvent(new Event('scroll'));
+}
 function arrangeNotes() {
   const stage = $('#heart-stage'), wall = $('#notes');
   const available = $('#heart-wall').clientWidth;
   const compact = noteButtons.length >= 5 && available >= 640;
+  const mobile = noteButtons.length > 0 && matchMedia('(max-width: 700px)').matches;
   stage.classList.toggle('has-notes', noteButtons.length > 0);
-  stage.classList.toggle('compact-heart', compact);
+  stage.classList.toggle('compact-heart', compact && !mobile);
+  stage.classList.toggle('mobile-heart', mobile);
+  $('#wall-title').textContent = mobile ? '把心意，一页页珍藏' : '把心意，拼成一颗心';
+  $('#heart-wall .wall-heading > p:last-child').textContent = mobile ? '您奔赴新的校园，这些心意一直都在。' : '您奔赴新的校园，我们把感谢留成一颗心。';
+  $('#mobile-heart-nav').hidden = !mobile;
+  $('#mobile-heart-hint').hidden = !mobile || noteButtons.length === 1;
+  if (!mobile) { wall.removeAttribute('tabindex'); wall.removeAttribute('aria-describedby'); }
   if (!noteButtons.length) { stage.style.removeProperty('--wall-width'); stage.style.removeProperty('--note-width'); wall.replaceChildren(); sizeHeart(); return; }
   const oldPositions = new Map(noteButtons.filter(note => note.isConnected && !note.classList.contains('note-enter')).map(note => [note, note.getBoundingClientRect()]));
   const focused = document.activeElement;
+  if (mobile) {
+    arrangeMobileNotes(wall); sizeHeart();
+    if (focused?.closest('.heart-note') && document.activeElement !== focused && focused.isConnected) focused.focus({ preventScroll: true });
+    return;
+  }
   const gap = compact ? 12 : 24;
   const columns = Math.max(1, Math.min(8, Math.floor((available * .72 + gap) / ((compact ? 90 : 200) + gap)), Math.ceil(Math.sqrt(noteButtons.length) * (compact ? 1.35 : 1))));
   const width = Math.min(available, noteButtons.length === 1 ? 520 : (columns * (compact ? 130 : 210) + (columns - 1) * gap) / .72);
   stage.style.setProperty('--wall-width', `${width}px`);
   stage.style.setProperty('--note-gap', `${gap}px`);
   stage.style.setProperty('--note-width', `${Math.min(220, (width * .72 - (columns - 1) * gap) / columns)}px`);
-  const rows = [...wall.children];
+  const rows = [...wall.children].filter(row => row.classList.contains('note-row'));
   const layout = heartRows(noteButtons.length, columns);
   stage.style.setProperty('--shoulder-width', layout.length <= 4 ? '80%' : '90%');
   layout.forEach((indices, r) => {
@@ -80,6 +152,7 @@ function arrangeNotes() {
     if (!row.isConnected) wall.append(row);
   });
   for (const row of rows) if (!row.children.length) row.remove();
+  wall.querySelectorAll('.mobile-heart-page').forEach(page => page.remove());
   for (const note of noteButtons) {
     const content = note.querySelector('.note-preview'), toggle = note.querySelector('.note-toggle');
     note.querySelector('.note-read').textContent = compact ? '阅读' : '单独阅读';

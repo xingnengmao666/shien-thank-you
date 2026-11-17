@@ -48,8 +48,8 @@ html[data-theme="sakura"] .wall-heading h1 { font-weight: 600; letter-spacing: 4
 html[data-theme="sakura"] .wall-heading .dedication { color: var(--blue); }
 html[data-theme="sakura"] .wall-foot { padding: 12px 16px 0; background: #fffdf8d9; border-radius: 4px; }
 html[data-theme="sakura"] .heart-outline path { fill-opacity: .6; stroke-width: 1.7; }
-html[data-theme="sakura"] #heart-thread stop:nth-child(-n+2) { stop-color: var(--school-original); }
-html[data-theme="sakura"] #heart-thread stop:nth-child(n+3) { stop-color: var(--school-new); }
+html[data-theme="sakura"] .heart-outline [id^="heart-thread"] stop:nth-child(-n+2) { stop-color: var(--school-original); }
+html[data-theme="sakura"] .heart-outline [id^="heart-thread"] stop:nth-child(n+3) { stop-color: var(--school-new); }
 html[data-theme="sakura"] .public-page .heart-note { color: #354f55; --note-shadow: 0 1px 2px #35494f0f, 0 7px 18px #35494f18; }
 html[data-theme="sakura"] .public-page .heart-note[data-campus="new"] { color: #654640; }
 html[data-theme="sakura"] .public-page .heart-note::after,
