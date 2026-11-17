@@ -61,11 +61,20 @@ function updateMobileGroup() {
   $('#heart-next').disabled = mobileIndex === groups - 1;
 }
 function turnMobilePage(index) {
+  const previous = mobileIndex;
   mobileIndex = index; updateMobileGroup();
   const page = $('#notes').children[mobileIndex * 3];
   if (page) {
+    page.style.scrollMarginTop = `${$('#mobile-heart-nav').offsetHeight + 16}px`;
     page.focus({ preventScroll: true });
-    page.scrollIntoView({ block: 'start', behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth' });
+    page.scrollIntoView({ block: 'start', behavior: 'instant' });
+    if (previous !== mobileIndex && !matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      $('#notes').querySelectorAll('.mobile-heart-page:not([hidden]) .heart-note').forEach((note, position) => {
+        note.classList.remove('note-enter');
+        note.getAnimations().forEach(animation => animation.cancel());
+        note.animate([{ opacity: 0, translate: '0 10px' }, { opacity: 1, translate: '0 0' }], { duration: 260, delay: position * 40, easing: 'ease-out', fill: 'backwards' });
+      });
+    }
   }
 }
 $('#heart-prev').addEventListener('click', () => turnMobilePage(mobileIndex - 1));

@@ -43,6 +43,17 @@ schedule();
 
 const themeHint = document.querySelector('#theme-hint');
 const themeSelect = document.querySelector('[data-theme-select]');
+const mobileScreen = matchMedia('(max-width: 700px)');
+function updateThemeHint() {
+  const mobile = mobileScreen.matches;
+  themeHint.classList.toggle('desktop-surprise', mobile);
+  themeHint.setAttribute('aria-label', mobile ? '电脑端爱心布局与主题提示' : '主题切换提示');
+  themeHint.querySelector('strong').textContent = mobile ? '电脑端有爱心布局惊喜' : '换个主题，换份心情';
+  themeHint.querySelector('p span').textContent = mobile ? '用电脑打开，看看祝福拼成完整爱心。手机上方也能切换主题。' : '上方“主题”可自由切换。';
+  themeHint.querySelector('.theme-hint-icon').textContent = mobile ? '♡' : '✦';
+}
+updateThemeHint();
+mobileScreen.addEventListener('change', updateThemeHint);
 let hintTimer;
 function dismissHint() {
   if (themeHint.contains(document.activeElement)) themeSelect.focus({ preventScroll: true });
@@ -52,7 +63,7 @@ function dismissHint() {
 function scheduleHintDismiss() {
   clearTimeout(hintTimer);
   if (themeHint.hidden || themeHint.matches(':hover, :focus-within')) return;
-  hintTimer = setTimeout(dismissHint, 8000);
+  hintTimer = setTimeout(dismissHint, mobileScreen.matches ? 12000 : 8000);
 }
 hintTimer = setTimeout(() => { reveal(themeHint); scheduleHintDismiss(); }, 800);
 themeHint.querySelector('.theme-hint-close').addEventListener('click', dismissHint);

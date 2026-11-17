@@ -13,6 +13,9 @@
 .theme-hint-action:hover { text-decoration: underline; text-underline-offset: 3px; }
 .theme-hint-close { width: 32px; height: 32px; padding: 0; border-radius: 50%; background: transparent; color: var(--muted); font-size: 23px; line-height: 1; }
 .theme-hint-close:hover { background: var(--pale); }
+.theme-hint.desktop-surprise { border: 2px solid var(--blue); box-shadow: 0 10px 32px #35494f30; }
+.theme-hint.desktop-surprise strong { font-size: 15px; color: var(--blue); }
+.theme-hint.desktop-surprise p span { font-size: 13px; color: var(--ink); }
 @keyframes theme-hint-enter {
   0% { transform: translateY(-22px) scale(.92); }
   55% { transform: translateY(4px) scale(1.025); }

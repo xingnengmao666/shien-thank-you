@@ -148,17 +148,18 @@
   .mobile-heart > .heart-outline { display: none; }
   .mobile-heart .school-legend { position: relative; inset: auto; margin-bottom: 14px; }
   .mobile-heart-hint { text-align: center; font-size: 12px; color: var(--muted); margin-bottom: 8px; }
-  .public-page .mobile-heart #notes { display: grid; grid-template-columns: minmax(0, 1fr); gap: 22px; width: 100%; max-width: 100%; min-width: 0; padding: 0; }
-  .mobile-heart-page { position: relative; width: 100%; max-width: 360px; min-width: 0; display: grid; grid-template-columns: minmax(0, 1fr); gap: 6px; justify-items: center; justify-self: center; padding: 0 4px; }
-  .public-page .mobile-heart .mobile-heart-page > .heart-outline { position: relative; inset: auto; width: 96px; height: 78px; max-width: 100%; overflow: visible; }
+  .public-page .mobile-heart #notes { display: grid; grid-template-columns: minmax(0, 1fr); gap: 8px; width: 100%; max-width: 100%; min-width: 0; padding: 0; }
+  .mobile-heart-page { position: relative; width: 100%; max-width: 360px; min-width: 0; display: grid; grid-template-columns: minmax(0, 1fr); gap: 4px; justify-items: center; justify-self: center; padding: 0 4px; }
+  .public-page .mobile-heart .mobile-heart-page > .heart-outline { position: relative; inset: auto; width: 64px; height: 52px; max-width: 100%; overflow: visible; }
   .public-page .mobile-heart .heart-note { flex: none; width: 100%; max-width: 100%; min-width: 0; min-height: 0; padding: 17px 16px 12px; transform: none; }
   .public-page .mobile-heart .note-preview { display: -webkit-box; -webkit-line-clamp: 4; height: auto; max-height: 7.2em; overflow: hidden; font-family: "Microsoft YaHei", "PingFang SC", sans-serif; font-size: 16px; line-height: 1.8; }
   .public-page .mobile-heart .note-author { font-size: 13px; line-height: 1.7; margin-top: 8px; }
   .public-page .mobile-heart .note-actions { display: block; margin-top: 10px; }
   .mobile-heart .note-toggle { display: none; }
   .public-page .mobile-heart .note-read { width: 100%; min-height: 44px; padding: 10px 12px; opacity: 1; font-size: 14px; font-weight: 600; border-top: 1px solid var(--line); }
-  .mobile-heart-nav { display: flex; flex-direction: column; gap: 8px; width: 100%; max-width: 360px; min-width: 0; margin: 22px auto 0; padding-inline: 4px; font-size: 13px; }
-  .mobile-heart-nav button { width: 100%; min-height: 44px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 6px; background: var(--white, var(--paper)); color: var(--ink); font-size: 13px; }
+  .mobile-heart-nav { position: sticky; top: max(8px, env(safe-area-inset-top)); z-index: 4; display: flex; flex-direction: column; gap: 8px; width: 100%; max-width: 360px; min-width: 0; margin: 12px auto 14px; padding: 10px; border: 1px solid var(--blue); border-radius: 8px; background: var(--white, var(--paper)); box-shadow: 0 4px 16px #2931281a; font-size: 13px; }
+  .mobile-heart-nav button { width: 100%; min-height: 44px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 6px; background: var(--white, var(--paper)); color: var(--ink); font-size: 13px; font-weight: 600; }
+  .mobile-heart-nav button:last-child { background: var(--blue); color: #fff; border-color: var(--blue); }
   #heart-position { text-align: center; font-variant-numeric: tabular-nums; color: var(--muted); }
   .public-page #read-dialog { width: 100%; max-width: none; max-height: 88dvh; margin: auto 0 0; padding: 32px 24px calc(24px + env(safe-area-inset-bottom)); border-radius: 18px 18px 0 0; overscroll-behavior: contain; }
   .public-page #read-dialog .dialog-close { position: sticky; top: 0; right: auto; float: right; z-index: 2; margin: -16px -8px 0 8px; min-width: 44px; min-height: 44px; padding: 0; background: inherit; }

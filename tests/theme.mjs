@@ -130,6 +130,9 @@ try {
   await page.evaluate(() => scrollTo({ top: 0, behavior: 'instant' }));
   await hint(page);
   await page.screenshot({ path: 'test-results/local-theme-hint-mobile.png' });
+  assert.match(await page.locator('#theme-hint strong').textContent(), /电脑端.*爱心布局.*惊喜/);
+  await page.clock.fastForward(9000);
+  assert.ok(await page.locator('#theme-hint').isVisible(), 'The mobile desktop-surprise hint should stay longer than eight seconds');
   for (const width of [320, 390, 768, 1365]) {
     await page.setViewportSize({ width, height: 844 });
     const box = await page.locator('#theme-hint').boundingBox();

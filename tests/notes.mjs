@@ -91,6 +91,7 @@ try {
     await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
     await page.evaluate(async () => { await Promise.all([...document.querySelectorAll('.heart-note')].flatMap(el => el.getAnimations()).map(a => a.finished.catch(() => {}))); });
     if (width > 700) { await complete(); continue; }
+    await page.evaluate(() => scrollTo({ top: 0, behavior: 'instant' }));
     assert.equal(await page.locator('.mobile-heart-page').count(), contents.length);
     assert.deepEqual(await page.locator('.heart-note').evaluateAll(notes => notes.map(note => note.dataset.messageId)), order);
     const visible = page.locator('.mobile-heart-page:not([hidden])');
@@ -98,10 +99,12 @@ try {
     assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), 'Portrait blessings overflowed the document');
     const boxes = await visible.evaluateAll(pages => pages.map(page => {
       const r = page.getBoundingClientRect(), note = page.querySelector('.heart-note').getBoundingClientRect();
-      return { x: r.x, right: r.right, top: r.top, bottom: r.bottom, width: note.width, height: note.height };
+      return { x: r.x, right: r.right, top: r.top, bottom: r.bottom, noteTop: note.top, noteBottom: note.bottom, width: note.width, height: note.height };
     }));
     assert.ok(boxes.every(box => box.x >= 0 && box.right <= width && box.width <= 360 && box.height < 300), 'Portrait notes are too wide or too tall');
     assert.ok(boxes.every((box, index) => index === 0 || box.top >= boxes[index - 1].bottom), 'Mobile blessings are not stacked vertically');
+    assert.ok(boxes.every((box, index) => index === 0 || box.noteTop - boxes[index - 1].noteBottom <= 70), 'Too much space separates mobile notes');
+    assert.ok(await page.locator('#mobile-heart-nav').evaluate(el => el.compareDocumentPosition(document.querySelector('#notes')) & Node.DOCUMENT_POSITION_FOLLOWING), 'Paging controls must come before the notes');
     const previews = await visible.locator('.note-preview').evaluateAll(notes => notes.map(note => note.getBoundingClientRect().height));
     assert.ok(previews[0] < previews[1], 'Short blessings still reserve blank preview space');
     assert.ok(await visible.locator('.heart-outline').evaluateAll(hearts => hearts.every(heart => {
@@ -115,11 +118,19 @@ try {
     assert.ok(await page.locator('#read-content').evaluate(el => parseFloat(getComputedStyle(el).fontSize) >= 17));
     assert.ok(await page.locator('#read-dialog').evaluate(el => el.scrollHeight > el.clientHeight), 'Long mobile blessings are not scrollable');
     await page.locator('#read-dialog .dialog-close').click();
+    assert.ok(await page.locator('#mobile-heart-nav').evaluate(el => { const r = el.getBoundingClientRect(); return r.top >= 0 && r.bottom <= innerHeight; }), 'Paging controls scrolled out of view');
+    await page.evaluate(() => document.querySelector('#heart-next').addEventListener('click', () => {
+      window.noteTurnFrames = [...document.querySelectorAll('.mobile-heart-page:not([hidden]) .heart-note')].map(note => note.getAnimations().flatMap(animation => animation.effect.getKeyframes()));
+    }, { once: true }));
     await page.locator('#heart-next').click();
     await page.waitForFunction(() => document.querySelector('#heart-position').textContent === '第 2 组 / 共 10 组');
+    assert.ok(await page.evaluate(() => window.noteTurnFrames.every(frames => frames.some(frame => frame.opacity === '0' && frame.translate.includes('10px')) && frames.some(frame => frame.opacity === '1'))), 'Turning a group must fade the notes in vertically');
     assert.deepEqual(await visible.locator('.heart-note').evaluateAll(notes => notes.map(note => note.dataset.messageId)), order.slice(3, 6));
+    await page.emulateMedia({ reducedMotion: 'reduce' });
     await page.locator('#heart-prev').click();
     await page.waitForFunction(() => document.querySelector('#heart-position').textContent === '第 1 组 / 共 10 组');
+    assert.ok(await visible.locator('.heart-note').evaluateAll(notes => notes.every(note => !note.getAnimations().length)), 'Reduced motion must disable page-turn animations');
+    await page.emulateMedia({ reducedMotion: 'no-preference' });
     assert.ok(await page.locator('#heart-prev').isDisabled());
     if (width === 390) await page.screenshot({ path: '.local/notes/mobile-portrait.png', fullPage: true });
   }
