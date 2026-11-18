@@ -88,6 +88,99 @@ test('Claiming rotates the code, revokes old sessions, hashes limiter identifier
   } finally { f.sqlite.close(); }
 });
 
+test('The master code bypasses exhausted verify and submit limits while preserving roster, content and review rules', async () => {
+  const f = await fixture(), masterCode = token(), headers = f.signals(), fingerprint = token();
+  try {
+    f.env.MASTER_STUDENT_CODE = masterCode;
+    const ordinary = await f.request('/api/student/verify', { real_name: '测试学生3', class_id: 1, student_code: f.oldCode }, headers);
+    assert.equal(ordinary.status, 200);
+    assert.equal((await f.claim('测试学生5', fingerprint, headers)).status, 201);
+    assert.equal((await f.claim('测试学生2', fingerprint, headers)).status, 409);
+    const now = Math.floor(Date.now() / 1000);
+    for (const scope of ['verify', 'submit']) {
+      const hash = await keyedHash(f.env.AUTH_SECRET, `${scope}:203.0.113.1`);
+      f.sqlite.prepare('INSERT INTO rate_limits (bucket, hits, expires_at) VALUES (?, 100, ?) ON CONFLICT(bucket) DO UPDATE SET hits = 100')
+        .run(`${hash}:${Math.floor(now / 600)}`, now + 600);
+    }
+    assert.equal((await f.request('/api/student/verify', { real_name: '测试学生3', class_id: 1, student_code: f.oldCode }, headers)).status, 429);
+    assert.equal((await f.request('/api/messages', { content: '谢谢老师一直以来耐心地教导我们。' }, { ...headers, Authorization: `Bearer ${ordinary.data.credential}` })).status, 429);
+    const limits = f.sqlite.prepare('SELECT * FROM rate_limits ORDER BY bucket').all();
+    for (const real_name of ['测试学生1', '测试学生2']) {
+      const verified = await f.request('/api/student/verify', { real_name, class_id: 1, student_code: masterCode }, headers);
+      assert.equal(verified.status, 200); assert.match(verified.data.credential, /^[a-f0-9]{64}\.[a-f0-9]{64}$/);
+      assert.ok(!JSON.stringify(verified.data).includes(masterCode));
+      const authorization = { ...headers, Authorization: `Bearer ${verified.data.credential}` };
+      assert.equal((await f.request('/api/messages', { content: '太短' }, authorization)).status, 400);
+      assert.equal((await f.request('/api/messages', { content: '谢谢老师一直以来耐心地教导我们。' }, authorization)).status, 201);
+      assert.equal((await f.request('/api/messages', { content: '再次感谢老师的教导与耐心帮助。' }, authorization)).status, 409);
+    }
+    assert.deepEqual(f.sqlite.prepare('SELECT * FROM rate_limits ORDER BY bucket').all(), limits);
+    assert.equal(f.sqlite.prepare('SELECT student_code FROM students WHERE id = 1').get().student_code, f.hash);
+    assert.equal(f.sqlite.prepare('SELECT COUNT(*) AS n FROM code_claims').get().n, 1);
+    assert.ok(f.sqlite.prepare('SELECT status FROM messages').all().every(row => row.status === 'pending'));
+    assert.equal((await f.request('/api/student/verify', { real_name: '不在名单中的姓名', class_id: 1, student_code: masterCode }, headers)).status, 401);
+    assert.equal((await f.request('/api/student/verify', { real_name: '测试学生1', class_id: 2, student_code: masterCode }, headers)).status, 401);
+    const verified = await f.request('/api/student/verify', { real_name: '测试学生4', class_id: 1, student_code: masterCode }, headers);
+    f.sqlite.exec('UPDATE settings SET submissions_open = 0 WHERE id = 1');
+    assert.equal((await f.request('/api/messages', { content: '谢谢老师一直以来耐心地教导我们。' }, { ...headers, Authorization: `Bearer ${verified.data.credential}` })).status, 403);
+    assert.equal((await f.request('/api/student/verify', { real_name: '测试学生4', class_id: 1, student_code: masterCode }, { ...headers, Origin: 'https://evil.example' })).status, 403);
+  } finally { f.sqlite.close(); }
+});
+
+test('Missing, invalid and incorrect master codes stay disabled and malformed verification still consumes its limit', async () => {
+  const f = await fixture(), code = token();
+  try {
+    for (const configured of [undefined, '', token().slice(0, 16), token().repeat(3), token()]) {
+      f.env.MASTER_STUDENT_CODE = configured;
+      assert.equal((await f.request('/api/student/verify', { real_name: '测试学生1', class_id: 1, student_code: code })).status, 401);
+    }
+    assert.equal(f.sqlite.prepare('SELECT COUNT(*) AS n FROM student_sessions').get().n, 0);
+    const before = f.sqlite.prepare('SELECT SUM(hits) AS n FROM rate_limits').get().n;
+    assert.equal((await f.request('/api/student/verify', {}, { 'Content-Type': 'text/plain' })).status, 415);
+    assert.equal(f.sqlite.prepare('SELECT SUM(hits) AS n FROM rate_limits').get().n, before + 1);
+    assert.equal((await f.request('/api/student/verify', { real_name: '测试学生1', class_id: 1, student_code: f.oldCode })).status, 200);
+  } finally { f.sqlite.close(); }
+});
+
+test('Master credentials cannot be forged or upgraded and stop working after rotation, removal, expiry or revocation', async () => {
+  const f = await fixture(), masterCode = token(), content = '谢谢老师一直以来耐心地教导我们。';
+  try {
+    f.env.MASTER_STUDENT_CODE = masterCode;
+    const verified = await f.request('/api/student/verify', { real_name: '测试学生1', class_id: 1, student_code: masterCode });
+    const ordinary = await f.request('/api/student/verify', { real_name: '测试学生2', class_id: 1, student_code: f.oldCode });
+    const raw = verified.data.credential, [nonce, signature] = raw.split('.');
+    for (const forged of [nonce, `${nonce}.${token()}`, `${ordinary.data.credential}.${signature}`]) {
+      assert.equal((await f.request('/api/messages', { content }, { Authorization: `Bearer ${forged}` })).status, 401);
+    }
+    assert.equal((await f.request('/api/messages', { content, bypassRateLimit: true, student_code: masterCode })).status, 401);
+    f.env.MASTER_STUDENT_CODE = token();
+    assert.equal((await f.request('/api/messages', { content }, { Authorization: `Bearer ${raw}` })).status, 401);
+    delete f.env.MASTER_STUDENT_CODE;
+    assert.equal((await f.request('/api/messages', { content }, { Authorization: `Bearer ${raw}` })).status, 401);
+    assert.equal((await f.request('/api/messages', { content }, { Authorization: `Bearer ${ordinary.data.credential}` })).status, 201);
+    f.env.MASTER_STUDENT_CODE = masterCode;
+    f.sqlite.prepare('UPDATE student_sessions SET expires_at = 0 WHERE token_hash = ?').run(await digest(raw));
+    assert.equal((await f.request('/api/messages', { content }, { Authorization: `Bearer ${raw}` })).status, 401);
+    const renewed = await f.request('/api/student/verify', { real_name: '测试学生1', class_id: 1, student_code: masterCode });
+    f.sqlite.prepare('DELETE FROM student_sessions WHERE token_hash = ?').run(await digest(renewed.data.credential));
+    assert.equal((await f.request('/api/messages', { content }, { Authorization: `Bearer ${renewed.data.credential}` })).status, 401);
+    assert.equal(f.sqlite.prepare('SELECT COUNT(*) AS n FROM messages WHERE student_id = 1').get().n, 0);
+  } finally { f.sqlite.close(); }
+});
+
+test('A concurrent student code change prevents issuing a master credential from stale student data', async () => {
+  const f = await fixture(), originalBatch = f.env.DB.batch;
+  try {
+    f.env.MASTER_STUDENT_CODE = token();
+    f.env.DB.batch = statements => {
+      f.sqlite.prepare('UPDATE students SET student_code = ? WHERE id = 1').run('replaced-hash');
+      return originalBatch(statements);
+    };
+    assert.equal((await f.request('/api/student/verify', { real_name: '测试学生1', class_id: 1, student_code: f.env.MASTER_STUDENT_CODE })).status, 401);
+    assert.equal(f.sqlite.prepare('SELECT COUNT(*) AS n FROM student_sessions').get().n, 0);
+  } finally { f.sqlite.close(); }
+});
+
 test('Student, IP, fingerprint and cookie each independently block duplicate and concurrent claims', async t => {
   for (const same of ['student', 'ip', 'fingerprint', 'device']) await t.test(same, async () => {
     const f = await fixture(), device = token(), fingerprint = token();

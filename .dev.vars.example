@@ -1,3 +1,5 @@
 # Run npm run setup:local to generate independent local secrets.
 AUTH_SECRET=replace-with-a-random-secret-at-least-32-characters
 BOOTSTRAP_TOKEN=replace-with-a-different-random-secret-at-least-32-characters
+# Optional administrator-only override; leave empty to disable (32-128 characters).
+MASTER_STUDENT_CODE=

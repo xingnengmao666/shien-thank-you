@@ -42,7 +42,7 @@ if (process.argv.includes('--self-test')) {
 } else {
   const privateValues = [];
   if (existsSync('.dev.vars')) for (const line of readFileSync('.dev.vars', 'utf8').split(/\r?\n/)) {
-    if (/^(AUTH_SECRET|BOOTSTRAP_TOKEN)=/.test(line)) privateValues.push(line.slice(line.indexOf('=') + 1).trim());
+    if (/^(AUTH_SECRET|BOOTSTRAP_TOKEN|MASTER_STUDENT_CODE)=/.test(line)) privateValues.push(line.slice(line.indexOf('=') + 1).trim());
   }
   if (existsSync('wrangler.toml')) {
     const id = readFileSync('wrangler.toml', 'utf8').match(/database_id\s*=\s*"([a-f0-9-]{36})"/i)?.[1];
@@ -54,7 +54,7 @@ if (process.argv.includes('--self-test')) {
       for (const row of rows) privateValues.push(row.real_name, row.class_name, row.teacher_name, row.student_code);
     } else if (/^(cloudflare-secrets|local-admin|production-admin)\.json$/.test(file)) {
       const data = JSON.parse(readFileSync('.local/' + file, 'utf8'));
-      for (const key of ['AUTH_SECRET', 'BOOTSTRAP_TOKEN', 'password']) if (data[key]) privateValues.push(data[key]);
+      for (const key of ['AUTH_SECRET', 'BOOTSTRAP_TOKEN', 'MASTER_STUDENT_CODE', 'password']) if (data[key]) privateValues.push(data[key]);
     }
   }
   const values = [...new Set(privateValues.filter(value => typeof value === 'string' && value.length >= 2))];

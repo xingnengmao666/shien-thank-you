@@ -29,6 +29,10 @@ export function equal(a, b) {
   for (let i = 0; i < Math.max(a.length, b.length); i++) diff |= (a.charCodeAt(i) || 0) ^ (b.charCodeAt(i) || 0);
   return diff === 0;
 }
+export function masterStudentCode(env) {
+  const code = env.MASTER_STUDENT_CODE;
+  return typeof code === 'string' && code.length >= 32 && code.length <= 128 ? code : null;
+}
 export async function passwordHash(password, salt = token()) {
   const key = await crypto.subtle.importKey('raw', encoder.encode(password), 'PBKDF2', false, ['deriveBits']);
   const result = await crypto.subtle.deriveBits({ name: 'PBKDF2', hash: 'SHA-256', iterations: 100000, salt: fromHex(salt) }, key, 256);
@@ -69,9 +73,13 @@ export async function adminAuth(request, env, ownerOnly = false) {
 }
 export async function studentAuth(request, env) {
   const raw = (request.headers.get('Authorization') || '').replace(/^Bearer /, '');
-  if (!/^[a-f0-9]{64}$/.test(raw)) throw new HttpError(401, '请先完成学生身份验证。');
+  if (!/^[a-f0-9]{64}(?:\.[a-f0-9]{64})?$/.test(raw)) throw new HttpError(401, '请先完成学生身份验证。');
+  const [nonce, signature] = raw.split('.'), masterCode = masterStudentCode(env);
+  if (signature && (!masterCode || !equal(signature, await keyedHash(masterCode, `master-student-session:${nonce}`)))) {
+    throw new HttpError(401, '身份验证已过期，请重新验证。');
+  }
   const student = await env.DB.prepare('SELECT student_id FROM student_sessions WHERE token_hash = ? AND expires_at > ?')
     .bind(await digest(raw), Math.floor(Date.now() / 1000)).first();
   if (!student) throw new HttpError(401, '身份验证已过期，请重新验证。');
-  return student.student_id;
+  return { studentId: student.student_id, bypassRateLimit: Boolean(signature) };
 }

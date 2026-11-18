@@ -1,5 +1,5 @@
 import { body, displayName, HttpError, id, json, page, sort, str } from '../lib.js';
-import { checkOrigin, codeDevice, digest, encryptCode, equal, keyedHash, passwordHash, passwordMatches, rateLimit, sessionCookie, studentAuth, token } from '../security.js';
+import { checkOrigin, codeDevice, digest, encryptCode, equal, keyedHash, masterStudentCode, passwordHash, passwordMatches, rateLimit, sessionCookie, studentAuth, token } from '../security.js';
 
 export async function publicRoutes(request, env, url) {
   const path = url.pathname;
@@ -82,24 +82,32 @@ export async function publicRoutes(request, env, url) {
     }
   }
   if (request.method === 'POST' && path === '/api/student/verify') {
-    await rateLimit(request, env, 'verify', 15);
-    const data = await body(request);
+    let data;
+    try { data = await body(request); }
+    catch (error) { await rateLimit(request, env, 'verify', 15); throw error; }
+    const masterCode = masterStudentCode(env), master = masterCode !== null && equal(data.student_code, masterCode);
+    if (!master) await rateLimit(request, env, 'verify', 15);
     const name = str(data.real_name, '姓名'), classId = id(data.class_id), code = str(data.student_code, '专属验证码', 8, 128);
     const student = await env.DB.prepare('SELECT id, student_code FROM students WHERE class_id = ? AND real_name = ?').bind(classId, name).first();
     const hash = await keyedHash(env.AUTH_SECRET, `student-code:${code}`);
-    if (!student || !equal(student.student_code, hash)) throw new HttpError(401, '姓名、班级或专属验证码不匹配，请核对或联系管理员。');
+    if (!student || !master && !equal(student.student_code, hash)) throw new HttpError(401, '姓名、班级或专属验证码不匹配，请核对或联系管理员。');
     const existing = await env.DB.prepare('SELECT status FROM messages WHERE student_id = ?').bind(student.id).first();
-    const raw = token(), expires = Math.floor(Date.now() / 1000) + 3600;
+    let raw = token();
+    if (master) raw += `.${await keyedHash(masterCode, `master-student-session:${raw}`)}`;
+    const expires = Math.floor(Date.now() / 1000) + 3600;
     const results = await env.DB.batch([
-      env.DB.prepare("UPDATE students SET verification_status = 'verified' WHERE id = ? AND student_code = ?").bind(student.id, hash),
-      env.DB.prepare('INSERT INTO student_sessions (token_hash, student_id, expires_at) SELECT ?, id, ? FROM students WHERE id = ? AND student_code = ?').bind(await digest(raw), expires, student.id, hash)
+      env.DB.prepare("UPDATE students SET verification_status = 'verified' WHERE id = ? AND student_code = ?").bind(student.id, student.student_code),
+      env.DB.prepare('INSERT INTO student_sessions (token_hash, student_id, expires_at) SELECT ?, id, ? FROM students WHERE id = ? AND student_code = ?').bind(await digest(raw), expires, student.id, student.student_code)
     ]);
     if (!results[1].meta.changes) throw new HttpError(401, '验证码已变更，请使用最新验证码重新验证。');
     return json({ verified: true, credential: raw, expires_at: expires, submission_status: existing?.status || null });
   }
   if (request.method === 'POST' && path === '/api/messages') {
-    await rateLimit(request, env, 'submit', 10);
-    const studentId = await studentAuth(request, env), data = await body(request);
+    const student = await studentAuth(request, env).catch(async error => {
+      await rateLimit(request, env, 'submit', 10); throw error;
+    });
+    if (!student.bypassRateLimit) await rateLimit(request, env, 'submit', 10);
+    const studentId = student.studentId, data = await body(request);
     const content = str(data.content, '感谢内容', 10, 1000);
     const settings = await env.DB.prepare('SELECT submissions_open FROM settings WHERE id = 1').first();
     if (!settings.submissions_open) throw new HttpError(403, '留言提交暂时关闭，请稍后再来。');
